@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111111">
+<meta name="description" content="La Cave de Jaby – caviste à Saint-André-de-la-Marche. Catalogue, promotions, actualités et commande en click & collect.">
+<title>La Cave de Jaby</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cave de Jaby">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bx:#9b1d16;--bx2:#5a3a24;--or:#a8743f;--cr:#f7f1e8;--cr2:#ebe0cf;--tx:#2b2220;--mu:#7a6e66;--ok:#3d6b45;--r:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--cr);color:var(--tx);padding-bottom:84px}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif}
+header{background:#111;color:#fff;padding:10px 16px;position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--or)}
+header img{height:62px;width:auto;border-radius:6px}
+header h1{font-size:1.45rem}header p{font-size:.8rem;opacity:.8;margin-top:2px}
+.banner{background:var(--or);color:#fff;font-size:.75rem;text-align:center;padding:5px}
+main{max-width:640px;margin:0 auto;padding:16px}
+section{display:none}section.on{display:block}
+h2{font-size:1.25rem;margin:18px 0 10px;color:var(--bx)}
+.hero{background:linear-gradient(135deg,#1a1210,var(--bx2));color:#fff;border-radius:var(--r);padding:18px}
+.hero h3{font-size:1.15rem;margin-bottom:6px}.hero p{font-size:.9rem;opacity:.9;line-height:1.45}
+.news{background:#fff;border-radius:var(--r);padding:14px;margin-bottom:10px;border-left:4px solid var(--or)}
+.news small{color:var(--mu);font-size:.75rem}.news h3{font-size:1rem;margin:3px 0}.news p{font-size:.88rem;line-height:1.4}
+.row{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}
+.row .card{min-width:200px;max-width:200px;scroll-snap-align:start}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.card{background:#fff;border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer}
+.vis{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.vis img.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;background:#fff}
+.tags{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:4px;z-index:2}
+.tag{font-size:.68rem;font-weight:600;padding:3px 7px;border-radius:20px;color:#fff}
+.t-promo{background:#c0392b}.t-new{background:var(--ok)}.t-cdc{background:var(--or)}
+.body{padding:10px 12px 12px;display:flex;flex-direction:column;flex:1}
+.body h3{font-size:.95rem;line-height:1.2}.reg{font-size:.75rem;color:var(--mu);margin:2px 0 6px}
+.body .desc{font-size:.8rem;color:#4d4440;line-height:1.35;flex:1}
+.price{margin-top:8px;display:flex;align-items:center;justify-content:space-between}
+.price b{font-size:1.05rem;color:var(--bx)}.price s{font-size:.8rem;color:var(--mu);margin-right:4px}
+.add{background:var(--bx);color:#fff;border:0;border-radius:20px;padding:7px 12px;font-weight:600;font-size:.8rem;cursor:pointer}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px}
+.chip{border:1px solid var(--bx);background:#fff;color:var(--bx);border-radius:20px;padding:6px 12px;font-size:.82rem;white-space:nowrap;cursor:pointer}
+.chip.on{background:var(--bx);color:#fff}
+input,textarea,select{width:100%;padding:10px;border:1px solid #d8ccbb;border-radius:10px;font:inherit;font-size:.92rem;background:#fff}
+label{display:block;font-size:.82rem;font-weight:600;margin:10px 0 4px}
+.search{margin-bottom:10px}
+.line{background:#fff;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.line .n{flex:1;font-size:.9rem}.line .n small{display:block;color:var(--mu)}
+.qty{display:flex;align-items:center;gap:6px}.qty button{width:28px;height:28px;border-radius:50%;border:1px solid var(--bx);background:#fff;color:var(--bx);font-size:1rem;cursor:pointer}
+.total{display:flex;justify-content:space-between;font-weight:600;font-size:1.05rem;padding:10px 4px}
+.btn{display:block;width:100%;background:var(--bx);color:#fff;border:0;border-radius:12px;padding:14px;font-weight:600;font-size:1rem;cursor:pointer;margin-top:14px;text-align:center;text-decoration:none;font-family:inherit}
+.btn.alt{background:#fff;color:var(--bx);border:1px solid var(--bx)}
+.btn:disabled{opacity:.6}
+.empty{text-align:center;color:var(--mu);padding:30px 10px}
+.info{background:#fff;border-radius:var(--r);padding:14px;margin-bottom:10px;font-size:.9rem;line-height:1.6}
+.info a{color:var(--bx)}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--cr2);display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;padding:9px 0 11px;font:inherit;font-size:.72rem;color:var(--mu);cursor:pointer;position:relative}
+nav button svg{display:block;margin:0 auto 2px;width:22px;height:22px}
+nav button.on{color:var(--bx);font-weight:600}
+.badge{position:absolute;top:4px;left:calc(50% + 6px);background:#c0392b;color:#fff;border-radius:10px;font-size:.65rem;padding:1px 6px}
+.evin{font-size:.72rem;color:var(--mu);text-align:center;margin:22px 0 6px;line-height:1.4}
+.overlay{position:fixed;inset:0;background:rgba(43,34,32,.75);display:flex;align-items:center;justify-content:center;z-index:20;padding:20px}
+.modal{background:var(--cr);border-radius:18px;padding:22px;max-width:420px;width:100%;max-height:90vh;overflow:auto}
+.modal h2{margin-top:0}
+.note{font-size:.78rem;color:var(--mu);margin-top:8px;line-height:1.4}
+.err{color:#c0392b;font-size:.85rem;margin-top:8px}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;padding:9px 16px;border-radius:20px;font-size:.85rem;opacity:0;transition:.25s;pointer-events:none;z-index:30}
+.toast.on{opacity:1}
+.sheetwrap{align-items:flex-end;padding:0}
+.sheet{background:var(--cr);border-radius:20px 20px 0 0;padding:18px 20px 26px;width:100%;max-width:640px;max-height:92vh;overflow:auto;position:relative;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.sheet .close{position:absolute;top:10px;right:12px;background:#fff;border:0;border-radius:50%;width:34px;height:34px;font-size:1.4rem;color:var(--bx);cursor:pointer;z-index:3}
+.bigvis .vis{height:220px;border-radius:14px}.bigvis svg{width:170px;height:170px}
+.sheet h2{margin:14px 0 2px}
+.fdesc{margin:10px 0;line-height:1.5;font-size:.95rem}
+.fprice{font-size:1.1rem}.fprice b{color:var(--bx);font-size:1.4rem}.fprice s{color:var(--mu)}.fprice small{color:var(--mu)}
+.qsel{display:flex;align-items:center;justify-content:center;gap:22px;margin:16px 0 8px}
+.qsel button{width:46px;height:46px;border-radius:50%;border:2px solid var(--bx);background:#fff;color:var(--bx);font-size:1.5rem;cursor:pointer}
+.qsel span{font-size:1.6rem;font-weight:600;min-width:40px;text-align:center}
+.raccourcis{display:flex;justify-content:center;gap:8px}
+.loading{text-align:center;color:var(--mu);padding:40px 0}
+.ok-big{font-size:3rem;text-align:center;color:var(--ok)}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="age">
+  <div class="modal" style="text-align:center">
+    <img src="logo.jpg" alt="" style="width:160px;border-radius:10px;margin-bottom:8px">
+    <h2>Bienvenue à la Cave de Jaby</h2>
+    <p style="margin:10px 0 18px;line-height:1.5">Cette application présente des boissons alcoolisées.<br>Avez-vous 18 ans ou plus ?</p>
+    <button class="btn" onclick="okAge()">Oui, j'ai 18 ans ou plus</button>
+    <button class="btn alt" onclick="noAge()">Non</button>
+    <p class="note" style="margin-top:14px">La vente d'alcool aux mineurs est interdite. Une pièce d'identité peut être demandée au retrait.</p>
+  </div>
+</div>
+
+<div class="banner" id="banner" style="display:none"></div>
+<header>
+  <img src="logo.jpg" alt="La Cave de Jaby">
+  <div><h1>La Cave de Jaby</h1><p>Caviste à Saint-André-de-la-Marche</p></div>
+</header>
+
+<main>
+  <section id="accueil" class="on">
+    <div class="hero">
+      <h3>Commandez, on prépare, vous passez !</h3>
+      <p>Vins, whiskys, rhums, spiritueux, bières et épicerie fine. Composez votre panier, envoyez la commande, récupérez-la à la cave. Paiement sur place.</p>
+    </div>
+    <div id="accContent"><div class="loading">Chargement…</div></div>
+  </section>
+
+  <section id="catalogue">
+    <h2>Catalogue</h2>
+    <input class="search" id="q" placeholder="Rechercher un produit, une région…" oninput="renderCat()">
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+    <p class="note" style="text-align:center;margin-top:16px">Une sélection parmi plus de 1 500 références. Vous cherchez autre chose ? Indiquez-le en commentaire de votre commande.</p>
+  </section>
+
+  <section id="panier">
+    <h2>Mon panier</h2>
+    <div id="lines"></div>
+    <div id="form"></div>
+  </section>
+
+  <section id="infos">
+    <h2>La cave</h2>
+    <div id="infosContent"></div>
+  </section>
+
+  <p class="evin" id="evin">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+  <p class="evin" style="margin-top:0">Vente d'alcool interdite aux mineurs de moins de 18 ans.</p>
+</main>
+
+<nav id="nav">
+  <button data-s="accueil" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+  <button data-s="catalogue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2h4v5l2 3v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10l2-3z"/></svg>Catalogue</button>
+  <button data-s="panier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14l-1.5 12a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Panier<span class="badge" id="badge" style="display:none">0</span></button>
+  <button data-s="infos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Infos</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div id="modalHost"></div>
+
+<script>
+/* =====================================================================
+   RÉGLAGE À FAIRE UNE SEULE FOIS :
+   coller entre les guillemets l'URL du script Google (se termine par /exec)
+   Laisser vide = mode démonstration (produits fictifs, commandes non envoyées)
+   ===================================================================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbwW8-pYGWWP57TDq8M8ETQr5u72VhzRtk7xXlKqEEvUFbveY3NiRkWMbD_1nCKgvE8/exec";
+
+/* ===== Données de démonstration (utilisées seulement si API_URL est vide) ===== */
+const DEMO = {
+ produits:[
+  {id:1,nom:"Saumur-Champigny 2022",cat:"Vins rouges",region:"Loire",desc:"Cabernet franc, fruits rouges, tanins souples.",prix:12.5,promo:null,nouveau:false,cdc:true,photo:""},
+  {id:2,nom:"Muscadet Sèvre-et-Maine sur lie 2023",cat:"Vins blancs",region:"Loire",desc:"Melon de Bourgogne, vif et iodé.",prix:8.9,promo:7.5,nouveau:false,cdc:true,photo:""},
+  {id:3,nom:"Côtes-de-Provence rosé 2024",cat:"Rosés",region:"Provence",desc:"Grenache et cinsault, pâle et fruité.",prix:11.9,promo:9.9,nouveau:false,cdc:false,photo:""},
+  {id:4,nom:"Crémant de Loire Brut",cat:"Bulles",region:"Loire",desc:"Méthode traditionnelle, bulles fines.",prix:13.5,promo:null,nouveau:true,cdc:true,photo:""},
+  {id:5,nom:"Whisky single malt écossais 12 ans",cat:"Whiskys",region:"Speyside",desc:"Vieilli en fût de xérès, notes de fruits secs.",prix:49,promo:44,nouveau:false,cdc:true,photo:""},
+  {id:6,nom:"Rhum vieux 8 ans",cat:"Rhums",region:"Guadeloupe",desc:"Vieilli en fût de chêne, notes de vanille et d'épices.",prix:52,promo:null,nouveau:true,cdc:false,photo:""},
+  {id:7,nom:"Gin artisanal français",cat:"Spiritueux",region:"Bretagne",desc:"Distillé avec des botaniques locales.",prix:36,promo:null,nouveau:true,cdc:false,photo:""},
+  {id:8,nom:"Bière blonde locale 33 cl",cat:"Bières",region:"Maine-et-Loire",desc:"Brasserie locale, légère et houblonnée.",prix:3.2,promo:2.8,nouveau:false,cdc:false,photo:""},
+  {id:9,nom:"Terrine de campagne 180 g",cat:"Épicerie",region:"Anjou",desc:"Bocal artisanal, producteur régional.",prix:6.9,promo:null,nouveau:true,cdc:false,photo:""},
+  {id:10,nom:"Coffret gourmand Anjou",cat:"Coffrets",region:"Sur mesure",desc:"Vin, terrine, confiture, biscuits. Personnalisable.",prix:45,promo:null,nouveau:false,cdc:true,photo:""}
+ ],
+ actus:[
+  {date:"Vendredi 27 novembre · 19h",titre:"Soirée Whisky – La Piautre",texte:"Dégustation commentée à la cave. Sur inscription."},
+  {date:"Vendredi 18 décembre · 19h",titre:"Soirée Cognac – Prunier",texte:"Découverte des cognacs de la maison Prunier. Sur inscription."}
+ ],
+ categories:["Vins rouges","Vins blancs","Rosés","Bulles","Whiskys","Rhums","Spiritueux","Bières","Épicerie","Coffrets"],
+ reglages:{
+  "Adresse":"5 rue Léonard de Vinci – Actipôle Anjou, Saint-André-de-la-Marche, 49450 Sèvremoine",
+  "Téléphone":"02 41 28 71 12","E-mail de la cave":"lacavedejaby@orange.fr","Délai de préparation":"24 h",
+  "Horaires cave":"Mar-jeu 10h–12h15 / 15h–19h · Ven-sam 10h–19h · Fermé dim-lun",
+  "Bar à vins et bières":"Jeudi et vendredi",
+  "Message sanitaire":"L'abus d'alcool est dangereux pour la santé, à consommer avec modération."
+ }
+};
+
+/* ===== État ===== */
+let D = {produits:[],actus:[],categories:[],reglages:{}};
+let panier = lire("cj_panier",{}); let catSel="Tout"; let qFiche=1, idFiche=null;
+const COUL={"Vins rouges":"#6d1f2f","Vins blancs":"#d9c27a","Rosés":"#e7a1a6",Bulles:"#e8d9a0",Whiskys:"#b5741f",Rhums:"#7a4a22",Spiritueux:"#5d7f8a",Bières:"#c98a2e",Épicerie:"#7a8b55",Coffrets:"#3a2418"};
+const $=id=>document.getElementById(id);
+const eur=n=>Number(n).toFixed(2).replace(".",",")+" €";
+const prixDe=p=>(p.promo!=null&&p.promo!=="")?p.promo:p.prix;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const prod=id=>D.produits.find(p=>String(p.id)===String(id));
+function lire(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
+function ecrire(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+/* ===== Chargement des données ===== */
+async function charger(){
+  if(!API_URL){ D=DEMO; banner("MODE DÉMONSTRATION – produits fictifs, commandes non envoyées"); return afficher(); }
+  const cache=lire("cj_data",null);
+  if(cache){ D=cache; afficher(); }
+  try{
+    const r=await fetch(API_URL+"?action=data&t="+Date.now());
+    const j=await r.json();
+    if(!j.produits) throw new Error("format");
+    D=j; ecrire("cj_data",j); afficher();
+  }catch(e){
+    if(!cache){ $("accContent").innerHTML=`<div class="empty">Impossible de charger le catalogue.<br>Vérifiez votre connexion puis réessayez.<br><br><button class="btn alt" onclick="location.reload()">Réessayer</button></div>`; }
+    else banner("Hors connexion – catalogue enregistré affiché");
+  }
+}
+function banner(t){ $("banner").textContent=t; $("banner").style.display="block"; }
+
+/* ===== Affichage ===== */
+function vis(p){
+  const c=COUL[p.cat]||"#888"; let shape;
+  if(p.cat==="Bières") shape=`<rect x="44" y="30" width="32" height="70" rx="6" fill="${c}"/><rect x="44" y="50" width="32" height="24" fill="#fff" opacity=".85"/>`;
+  else if(p.cat==="Épicerie") shape=`<rect x="38" y="44" width="44" height="54" rx="8" fill="${c}"/><rect x="36" y="36" width="48" height="12" rx="3" fill="#444"/><rect x="42" y="60" width="36" height="20" fill="#fff" opacity=".85"/>`;
+  else if(p.cat==="Coffrets") shape=`<rect x="26" y="40" width="68" height="58" rx="4" fill="${c}"/><rect x="56" y="40" width="8" height="58" fill="#b8893a"/><rect x="26" y="62" width="68" height="8" fill="#b8893a"/>`;
+  else shape=`<path d="M53 8h14v26c0 6 9 10 9 22v44a4 4 0 0 1-4 4H48a4 4 0 0 1-4-4V56c0-12 9-16 9-22z" fill="${c}"/><rect x="44" y="64" width="32" height="24" fill="#fff" opacity=".85"/>`;
+  let t=""; if(p.promo) t+=`<span class="tag t-promo">Promo</span>`; if(p.nouveau) t+=`<span class="tag t-new">Nouveau</span>`; if(p.cdc) t+=`<span class="tag t-cdc">Coup de cœur</span>`;
+  const src=p.photo?(/^https?:/.test(p.photo)?p.photo:"photos/"+p.photo):"";
+  const img=src?`<img class="ph" src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">`:"";
+  return `<div class="vis" style="background:#f4ece0"><div class="tags">${t}</div><svg viewBox="0 0 120 110" width="110" height="110">${shape}</svg>${img}</div>`;
+}
+function carte(p){
+  return `<div class="card" onclick="fiche('${p.id}')">${vis(p)}<div class="body"><h3>${esc(p.nom)}</h3><div class="reg">${esc(p.cat)}${p.region?" · "+esc(p.region):""}</div><div class="desc">${esc(p.desc)}</div>
+  <div class="price"><span>${p.promo?`<s>${eur(p.prix)}</s>`:""}<b>${eur(prixDe(p))}</b></span><button class="add" onclick="event.stopPropagation();fiche('${p.id}')">Ajouter</button></div></div></div>`;
+}
+function bloc(titre,liste){ return liste.length?`<h2>${titre}</h2><div class="row">${liste.map(carte).join("")}</div>`:""; }
+function afficher(){
+  const P=D.produits;
+  $("accContent").innerHTML =
+    (D.actus.length?`<h2>Actualités</h2>`+D.actus.map(a=>`<div class="news"><small>${esc(a.date)}</small><h3>${esc(a.titre)}</h3><p>${esc(a.texte)}</p></div>`).join(""):"")
+    + bloc("Coups de cœur de Jaby",P.filter(p=>p.cdc))
+    + bloc("Promotions",P.filter(p=>p.promo))
+    + bloc("Nouveautés",P.filter(p=>p.nouveau))
+    + `<button class="btn alt" onclick="go('catalogue')">Voir tout le catalogue</button>`;
+  const R=D.reglages||{};
+  if(R["Message sanitaire"]) $("evin").textContent=R["Message sanitaire"];
+  const h=(R["Horaires cave"]||"").split("·").map(s=>esc(s.trim())).join("<br>");
+  const tel=R["Téléphone"]||"", mail=R["E-mail de la cave"]||"";
+  $("infosContent").innerHTML=
+    `<div class="info"><b>Adresse</b><br>${esc(R["Adresse"]||"")}<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(R["Adresse"]||"La Cave de Jaby")}" target="_blank" rel="noopener">Itinéraire</a></div>`
+   +`<div class="info"><b>Horaires de la cave</b><br>${h}</div>`
+   +(R["Bar à vins et bières"]?`<div class="info"><b>Bar à vins et à bières</b><br>À l'étage : ${esc(R["Bar à vins et bières"])}</div>`:"")
+   +`<div class="info"><b>Contact</b><br>Tél. : <a href="tel:${esc(tel.replace(/\s/g,""))}">${esc(tel)}</a><br>E-mail : <a href="mailto:${esc(mail)}">${esc(mail)}</a><br><a href="https://www.lacavedejaby.fr/" target="_blank" rel="noopener">lacavedejaby.fr</a> · <a href="https://www.facebook.com/lacavedejaby" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.instagram.com/lacavedejaby" target="_blank" rel="noopener">Instagram</a></div>`
+   +`<div class="info"><b>Click & collect</b><br>Commande préparée sous ${esc(R["Délai de préparation"]||"24 h")}. La cave vous confirme le retrait. Paiement sur place.</div>`;
+  // nettoie le panier des produits disparus
+  for(const id of Object.keys(panier)) if(!prod(id)) delete panier[id];
+  renderCat(); maj();
+}
+function renderCat(){
+  const cats=["Tout",...(D.categories||[]).filter(c=>D.produits.some(p=>p.cat===c))];
+  D.produits.forEach(p=>{if(!cats.includes(p.cat))cats.push(p.cat)});
+  $("chips").innerHTML=cats.map(c=>`<button class="chip ${c===catSel?"on":""}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{catSel=b.dataset.c;renderCat()});
+  const q=$("q").value.toLowerCase().trim();
+  const l=D.produits.filter(p=>(catSel==="Tout"||p.cat===catSel)&&(!q||(p.nom+" "+p.region+" "+p.cat+" "+p.desc).toLowerCase().includes(q)));
+  $("grid").innerHTML=l.length?l.map(carte).join(""):`<div class="empty">Aucun produit trouvé.</div>`;
+}
+
+/* ===== Fiche produit ===== */
+function fiche(id){
+  const p=prod(id); if(!p) return; qFiche=1; idFiche=id;
+  const deja=panier[id]||0;
+  $("modalHost").innerHTML=`<div class="overlay sheetwrap" id="ov"><div class="sheet">
+   <button class="close" onclick="fermerModal()" aria-label="Fermer">×</button>
+   <div class="bigvis">${vis(p)}</div>
+   <h2>${esc(p.nom)}</h2><div class="reg">${esc(p.cat)}${p.region?" · "+esc(p.region):""}</div>
+   <p class="fdesc">${esc(p.desc)}</p>
+   <div class="fprice">${p.promo?`<s>${eur(p.prix)}</s> `:""}<b>${eur(prixDe(p))}</b> <small>l'unité</small></div>
+   <div class="qsel"><button onclick="chgQ(-1)">−</button><span id="qv">1</span><button onclick="chgQ(1)">+</button></div>
+   <div class="raccourcis">${[3,6,12].map(n=>`<button class="chip" onclick="setQ(${n})">${n}</button>`).join("")}</div>
+   <button class="btn" id="addBtn" onclick="ajout('${p.id}',qFiche);fermerModal()"></button>
+   ${deja?`<p class="note" style="text-align:center">Déjà ${deja} dans votre panier.</p>`:""}
+  </div></div>`;
+  $("ov").onclick=e=>{if(e.target.id==="ov")fermerModal()};
+  majFiche();
+}
+function majFiche(){ const p=prod(idFiche); $("qv").textContent=qFiche; $("addBtn").textContent=`Ajouter ${qFiche} au panier – ${eur(prixDe(p)*qFiche)}`; }
+function chgQ(d){ qFiche=Math.max(1,Math.min(99,qFiche+d)); majFiche(); }
+function setQ(n){ qFiche=n; majFiche(); }
+function fermerModal(){ $("modalHost").innerHTML=""; }
+
+/* ===== Panier ===== */
+function ajout(id,n=1){ panier[id]=(panier[id]||0)+n; maj(); toast(n>1?`${n} ajoutés au panier`:"Ajouté au panier"); }
+function qte(id,d){ panier[id]=(panier[id]||0)+d; if(panier[id]<=0) delete panier[id]; maj(); }
+function total(){ return Object.entries(panier).reduce((s,[id,q])=>s+prixDe(prod(id))*q,0); }
+function maj(){
+  ecrire("cj_panier",panier);
+  const n=Object.values(panier).reduce((a,b)=>a+b,0);
+  $("badge").style.display=n?"inline":"none"; $("badge").textContent=n;
+  renderPanier();
+}
+function renderPanier(){
+  const ids=Object.keys(panier).filter(prod);
+  if(!ids.length){ $("lines").innerHTML=`<div class="empty">Votre panier est vide.<br><br><button class="btn alt" onclick="go('catalogue')">Voir le catalogue</button></div>`; $("form").innerHTML=""; return; }
+  $("lines").innerHTML=ids.map(id=>{const p=prod(id);return `<div class="line"><div class="n">${esc(p.nom)}<small>${eur(prixDe(p))} l'unité</small></div><div class="qty"><button onclick="qte('${id}',-1)">−</button><b>${panier[id]}</b><button onclick="qte('${id}',1)">+</button></div></div>`}).join("")
+   +`<div class="total"><span>Total estimé</span><span>${eur(total())}</span></div>`;
+  if(!$("form").innerHTML){
+    const c=lire("cj_client",{});
+    $("form").innerHTML=`<h2>Retrait à la cave</h2>
+    <label>Nom et prénom *</label><input id="fNom" autocomplete="name" value="${esc(c.nom||"")}">
+    <label>Téléphone *</label><input id="fTel" type="tel" autocomplete="tel" value="${esc(c.tel||"")}">
+    <label>Jour de retrait souhaité *</label><input id="fDate" type="date" min="${prochainJour()}" value="${prochainJour()}">
+    <label>Créneau</label><select id="fCre"><option>Matin</option><option>Après-midi</option><option>Fin de journée</option></select>
+    <label>Commentaire</label><textarea id="fCom" rows="2" placeholder="Ex. : emballage cadeau, produit recherché…"></textarea>
+    <button class="btn" id="btnEnv" onclick="envoyer()">Envoyer ma commande</button>
+    <div id="fErr" class="err"></div>
+    <p class="note">Paiement sur place au retrait. La cave vous confirme la commande. Vos nom et téléphone servent uniquement à traiter la commande.</p>`;
+  }
+}
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function prochainJour(){ const d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===1) d.setDate(d.getDate()+1); return iso(d); }
+async function envoyer(){
+  const nom=$("fNom").value.trim(), tel=$("fTel").value.trim(), dv=$("fDate").value;
+  const err=m=>{$("fErr").textContent=m};
+  if(!nom||!tel) return err("Merci d'indiquer votre nom et votre téléphone.");
+  if(tel.replace(/\D/g,"").length<10) return err("Le numéro de téléphone semble incomplet.");
+  if(!dv) return err("Merci de choisir un jour de retrait.");
+  const jd=new Date(dv+"T12:00:00");
+  if(jd.getDay()===0||jd.getDay()===1) return err("La cave est fermée le dimanche et le lundi. Choisissez un autre jour.");
+  if(dv<=iso(new Date())) return err("Choisissez un jour à partir de demain.");
+  err(""); ecrire("cj_client",{nom,tel});
+  const commande={nom,tel,retrait:jd.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"}),creneau:$("fCre").value,commentaire:$("fCom").value.trim(),
+    lignes:Object.entries(panier).map(([id,q])=>({id,q}))};
+  const b=$("btnEnv"); b.disabled=true; b.textContent="Envoi en cours…";
+  try{
+    let numero="DÉMO";
+    if(API_URL){
+      const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(commande)});
+      const j=await r.json();
+      if(!j.ok) throw new Error(j.erreur||"Erreur");
+      numero=j.numero;
+    }
+    confirmation(numero,commande);
+  }catch(e){
+    b.disabled=false; b.textContent="Envoyer ma commande";
+    err("La commande n'a pas pu être envoyée ("+e.message+"). Vérifiez votre connexion et réessayez, ou appelez la cave.");
+  }
+}
+function confirmation(numero,c){
+  const tot=eur(total());
+  panier={}; $("form").innerHTML=""; maj();
+  $("modalHost").innerHTML=`<div class="overlay"><div class="modal" style="text-align:center">
+   <div class="ok-big">✓</div><h2>Merci ${esc(c.nom.split(" ")[0])} !</h2>
+   <p style="margin:10px 0;line-height:1.5">Votre commande <b>n° ${esc(numero)}</b> a bien été transmise à la cave.<br>Retrait prévu : <b>${esc(c.retrait)}</b> (${esc(c.creneau.toLowerCase())}).<br>Total estimé : <b>${tot}</b></p>
+   <p class="note">La cave vous contactera si besoin au ${esc(c.tel)}. Paiement sur place.</p>
+   ${API_URL?"":`<p class="err">Mode démonstration : cette commande n'a pas été envoyée.</p>`}
+   <button class="btn" onclick="fermerModal();go('accueil')">Retour à l'accueil</button></div></div>`;
+}
+
+/* ===== Navigation & divers ===== */
+function go(s){ document.querySelectorAll("section").forEach(x=>x.classList.toggle("on",x.id===s)); document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.s===s)); window.scrollTo(0,0); }
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.s));
+let tt; function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),1600);}
+function okAge(){ ecrire("cj_age",1); $("age").remove(); }
+function noAge(){ $("age").querySelector(".modal").innerHTML=`<h2>Désolé</h2><p style="margin-top:10px">Cette application est réservée aux personnes majeures.</p>`; }
+if(lire("cj_age",0)===1) $("age").remove();
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+charger();
+</script>
+</body>
+</html>
