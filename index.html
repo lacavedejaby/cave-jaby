@@ -33,7 +33,28 @@ h2{font-size:1.25rem;margin:18px 0 10px;color:var(--bx)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .card{background:#fff;border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer}
 .vis{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.vis img.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px;background:#fff}
+.vis img.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px;background:#f4ece0}
+.t-lim{background:#1a1210}
+/* ---- Espace gérant ---- */
+#gerant{position:fixed;inset:0;background:var(--cr);z-index:15;overflow:auto;display:none;padding-bottom:40px}
+#gerant.on{display:block}
+#gerant .gh{background:#1a1210;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:2}
+#gerant .gh h2{color:#fff;margin:0;font-size:1.1rem;flex:1}
+#gerant .gh button{background:none;border:1px solid #fff6;color:#fff;border-radius:8px;padding:6px 10px;font:inherit;font-size:.8rem;cursor:pointer}
+#gerant .gb{max-width:640px;margin:0 auto;padding:14px 16px}
+.gitem{background:#fff;border-radius:12px;padding:8px;display:flex;gap:10px;align-items:center;margin-bottom:8px;cursor:pointer}
+.gitem .th{width:52px;height:64px;border-radius:8px;background:#f4ece0;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.4rem}
+.gitem .th img{width:100%;height:100%;object-fit:contain}
+.gitem .gi{flex:1;min-width:0}.gitem b{display:block;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gitem small{display:block;font-size:.74rem;color:var(--mu);margin-top:2px}
+.ok{color:var(--ok)}.ko{color:#c0392b}
+.pill{display:inline-block;font-size:.66rem;padding:1px 6px;border-radius:10px;background:#eee;color:#555;margin-left:4px}
+.sw{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:.9rem}
+.sw input{width:22px;height:22px;accent-color:var(--bx)}
+.phbox{background:#f4ece0;border-radius:14px;height:230px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.phbox img{max-width:100%;max-height:100%}
+.row2{display:flex;gap:8px}.row2>*{flex:1}
+.hint{font-size:.74rem;color:var(--mu);margin-top:3px}
 .tags{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:4px;z-index:2}
 .tag{font-size:.68rem;font-weight:600;padding:3px 7px;border-radius:20px;color:#fff}
 .t-promo{background:#c0392b}.t-new{background:var(--ok)}.t-cdc{background:var(--or)}
@@ -148,6 +169,7 @@ nav button.on{color:var(--bx);font-weight:600}
 
 <div class="toast" id="toast"></div>
 <div id="modalHost"></div>
+<div id="gerant"></div>
 
 <script>
 /* =====================================================================
@@ -221,9 +243,8 @@ function vis(p){
   else if(p.cat==="Épicerie") shape=`<rect x="38" y="44" width="44" height="54" rx="8" fill="${c}"/><rect x="36" y="36" width="48" height="12" rx="3" fill="#444"/><rect x="42" y="60" width="36" height="20" fill="#fff" opacity=".85"/>`;
   else if(p.cat==="Coffrets") shape=`<rect x="26" y="40" width="68" height="58" rx="4" fill="${c}"/><rect x="56" y="40" width="8" height="58" fill="#b8893a"/><rect x="26" y="62" width="68" height="8" fill="#b8893a"/>`;
   else shape=`<path d="M53 8h14v26c0 6 9 10 9 22v44a4 4 0 0 1-4 4H48a4 4 0 0 1-4-4V56c0-12 9-16 9-22z" fill="${c}"/><rect x="44" y="64" width="32" height="24" fill="#fff" opacity=".85"/>`;
-  let t=""; if(p.promo) t+=`<span class="tag t-promo">Promo</span>`; if(p.nouveau) t+=`<span class="tag t-new">Nouveau</span>`; if(p.cdc) t+=`<span class="tag t-cdc">Coup de cœur</span>`;
-  const src=p.photo?(/^https?:/.test(p.photo)?p.photo:"photos/"+p.photo):"";
-  const img=src?`<img class="ph" src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">`:"";
+  let t=""; if(p.promo) t+=`<span class="tag t-promo">Promo</span>`; if(p.nouveau) t+=`<span class="tag t-new">Nouveau</span>`; if(p.cdc) t+=`<span class="tag t-cdc">Coup de cœur</span>`; if(p.limite) t+=`<span class="tag t-lim">Derniers exemplaires</span>`;
+  const img=imgTag(p.photo,"ph");
   return `<div class="vis" style="background:#f4ece0"><div class="tags">${t}</div><svg viewBox="0 0 120 110" width="110" height="110">${shape}</svg>${img}</div>`;
 }
 function carte(p){
@@ -248,7 +269,8 @@ function afficher(){
    +`<div class="info"><b>Horaires de la cave</b><br>${h}</div>`
    +(R["Bar à vins et bières"]?`<div class="info"><b>Bar à vins et à bières</b><br>À l'étage : ${esc(R["Bar à vins et bières"])}</div>`:"")
    +`<div class="info"><b>Contact</b><br>Tél. : <a href="tel:${esc(tel.replace(/\s/g,""))}">${esc(tel)}</a><br>E-mail : <a href="mailto:${esc(mail)}">${esc(mail)}</a><br><a href="https://www.lacavedejaby.fr/" target="_blank" rel="noopener">lacavedejaby.fr</a> · <a href="https://www.facebook.com/lacavedejaby" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.instagram.com/lacavedejaby" target="_blank" rel="noopener">Instagram</a></div>`
-   +`<div class="info"><b>Click & collect</b><br>Commande préparée sous ${esc(R["Délai de préparation"]||"24 h")}. La cave vous confirme le retrait. Paiement sur place.</div>`;
+   +`<div class="info"><b>Click & collect</b><br>Commande préparée sous ${esc(R["Délai de préparation"]||"24 h")}. La cave vous confirme le retrait. Paiement sur place.</div>`
+   +`<p style="text-align:center;margin-top:18px"><a href="#gerant" style="color:var(--mu);font-size:.75rem">Espace gérant</a></p>`;
   // nettoie le panier des produits disparus
   for(const id of Object.keys(panier)) if(!prod(id)) delete panier[id];
   renderCat(); maj();
@@ -354,6 +376,135 @@ function confirmation(numero,c){
    <button class="btn" onclick="fermerModal();go('accueil')">Retour à l'accueil</button></div></div>`;
 }
 
+/* ===== Photos (Drive ou fichier) ===== */
+const PH_CACHE={};
+function photoSrc(ph){
+  if(!ph) return "";
+  if(ph.startsWith("drive:")){ const id=ph.slice(6); return PH_CACHE[id]||("https://drive.google.com/thumbnail?id="+encodeURIComponent(id)+"&sz=w800"); }
+  return /^https?:|^data:/.test(ph)?ph:"photos/"+ph;
+}
+function imgTag(ph,cls){
+  const src=photoSrc(ph); if(!src) return "";
+  const id=ph.startsWith("drive:")?ph.slice(6):"";
+  return `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy" ${id?`data-drive="${esc(id)}"`:""} onerror="photoSecours(this)">`;
+}
+async function photoSecours(img){
+  const id=img.dataset.drive;
+  if(!id||img.dataset.tente||!API_URL){ img.remove(); return; }
+  img.dataset.tente=1;
+  try{
+    if(!PH_CACHE[id]){ const r=await fetch(API_URL+"?action=photo&id="+encodeURIComponent(id)); const j=await r.json(); if(!j.data) throw 0; PH_CACHE[id]=j.data; }
+    img.src=PH_CACHE[id];
+  }catch(e){ img.remove(); }
+}
+
+/* ===== Espace gérant ===== */
+let G={code:lire("cj_code",""),produits:[],categories:[],filtre:"tous",edit:null};
+async function apiG(action,extra={}){
+  const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,code:G.code,...extra})});
+  const j=await r.json(); if(!j.ok) throw new Error(j.erreur||"Erreur"); return j;
+}
+function ouvrirGerant(){
+  $("gerant").classList.add("on"); document.body.style.overflow="hidden";
+  if(!API_URL){ $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb"><div class="empty">L'espace gérant n'est disponible que dans la version en ligne de l'appli.</div></div>`; return; }
+  if(G.code) chargerG(); else loginG();
+}
+function fermerGerant(){ $("gerant").classList.remove("on"); document.body.style.overflow=""; if(location.hash==="#gerant") history.replaceState(null,"",location.pathname+location.search); charger(); }
+function ghead(t,retour){ return `<div class="gh">${retour?`<button onclick="${retour}">‹ Retour</button>`:""}<h2>${t}</h2><button onclick="fermerGerant()">Fermer</button></div>`; }
+function loginG(err){
+  $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb"><div class="info" style="margin-top:10px">
+   <b>Réservé à la cave</b><br>Saisissez le code gérant (onglet Réglages du tableau).
+   <input id="gCode" type="password" inputmode="numeric" autocomplete="off" style="margin-top:10px;font-size:1.3rem;text-align:center;letter-spacing:6px" maxlength="12">
+   <button class="btn" id="gLog">Entrer</button><div class="err">${err?esc(err):""}</div></div></div>`;
+  const go=async()=>{ G.code=$("gCode").value.trim(); $("gLog").disabled=true; $("gLog").textContent="Vérification…";
+    try{ await apiG("login"); ecrire("cj_code",G.code); chargerG(); }catch(e){ G.code=""; loginG(e.message); } };
+  $("gLog").onclick=go; $("gCode").onkeydown=e=>{if(e.key==="Enter")go()}; setTimeout(()=>$("gCode").focus(),50);
+}
+async function chargerG(){
+  $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb"><div class="loading">Chargement des produits…</div></div>`;
+  try{ const j=await apiG("liste"); G.produits=j.produits; G.categories=j.categories; listeG(); }
+  catch(e){ if(/code/i.test(e.message)){ G.code=""; ecrire("cj_code",""); loginG(e.message); } else $("gerant").querySelector(".gb").innerHTML=`<div class="empty">${esc(e.message)}<br><br><button class="btn alt" onclick="chargerG()">Réessayer</button></div>`; }
+}
+function etatRef(p){
+  if(!p.ref) return `<span class="hint">Pas de réf caisse</span>`;
+  if(!p.refTrouvee) return `<span class="ko">✘ Réf ${esc(p.ref)} introuvable dans le stock</span>`;
+  return `<span class="ok">✔ ${esc(p.ref)}</span> · caisse ${p.prixCaisse!=null?eur(p.prixCaisse):"—"} · stock ${p.stock??"—"}`;
+}
+function listeG(){
+  const F={tous:"Tous",photo:"Sans photo",libres:"Emplacements libres",masques:"Masqués"};
+  const q=(G.q||"").toLowerCase();
+  let L=G.produits.filter(p=>{
+    if(G.filtre==="photo") return p.nom&&!p.photo;
+    if(G.filtre==="libres") return !p.nom;
+    if(G.filtre==="masques") return p.nom&&(!p.afficher||p.stock===0);
+    return true;
+  }).filter(p=>!q||(p.nom+" "+p.ref+" "+p.cat).toLowerCase().includes(q));
+  const nbPh=G.produits.filter(p=>p.nom&&p.photo).length, nbNom=G.produits.filter(p=>p.nom).length;
+  $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb">
+   <p class="note" style="margin:0 0 10px">${nbNom} produits saisis sur ${G.produits.length} · ${nbPh} avec photo</p>
+   <input class="search" id="gQ" placeholder="Rechercher…" value="${esc(G.q||"")}">
+   <div class="chips">${Object.entries(F).map(([k,v])=>`<button class="chip ${G.filtre===k?"on":""}" onclick="G.filtre='${k}';listeG()">${v}</button>`).join("")}</div>
+   ${L.map(p=>`<div class="gitem" onclick="editG('${p.id}')"><div class="th">${p.photo?imgTag(p.photo,""):(p.nom?"📷":"➕")}</div>
+     <div class="gi"><b>${p.nom?esc(p.nom):`<span style="color:var(--mu)">Emplacement libre</span>`}${!p.afficher&&p.nom?`<span class="pill">masqué</span>`:""}${p.stock===0?`<span class="pill">épuisé</span>`:""}</b>
+     <small>${esc(p.cat)} · ${p.prix!=null?eur(p.prix):"pas de prix"}${p.promo!=null?" → promo "+eur(p.promo):""}${p.cdc?" · ❤":""}${p.nouveau?" · Nouveau":""}</small><small>${etatRef(p)}</small></div></div>`).join("")||`<div class="empty">Aucun produit.</div>`}
+   <button class="btn alt" onclick="G.code='';ecrire('cj_code','');loginG()">Se déconnecter</button></div>`;
+  $("gQ").oninput=e=>{G.q=e.target.value;const pos=e.target.selectionStart;listeG();const i=$("gQ");i.focus();i.setSelectionRange(pos,pos)};
+}
+function editG(id){
+  const p=G.produits.find(x=>x.id===String(id)); if(!p) return; G.edit=p;
+  const cats=G.categories.map(c=>`<option ${c===p.cat?"selected":""}>${esc(c)}</option>`).join("");
+  $("gerant").innerHTML=ghead(p.nom?"Modifier":"Nouveau produit","listeG()")+`<div class="gb">
+   <div class="phbox" id="gPh">${p.photo?imgTag(p.photo,""):`<span style="color:var(--mu)">Pas encore de photo</span>`}</div>
+   <div class="row2"><button class="btn" onclick="$('fCam').click()">📷 Prendre la photo</button><button class="btn alt" onclick="$('fGal').click()">🖼 Galerie</button></div>
+   <input type="file" id="fCam" accept="image/*" capture="environment" hidden><input type="file" id="fGal" accept="image/*" hidden>
+   <p class="hint">Bouteille seule, de face, fond clair, en hauteur. La photo est recadrée et allégée automatiquement.</p>
+   <label>Nom affiché *</label><input id="eNom" value="${esc(p.nom)}" placeholder="Ex. : Champagne Beauregard Blanc de Blancs">
+   <label>Réf caisse (DigiCave)</label><input id="eRef" value="${esc(p.ref)}" placeholder="Ex. : BEAUREGARD2" autocapitalize="characters">
+   <div class="hint">${etatRef(p)}</div>
+   <label>Catégorie</label><select id="eCat">${cats}</select>
+   <label>Région / origine</label><input id="eReg" value="${esc(p.region)}">
+   <label>Description</label><textarea id="eDesc" rows="3" placeholder="Cépage, appellation, élevage, contenance…">${esc(p.desc)}</textarea>
+   <div class="hint">Loi Évin : rester factuel (origine, cépage, degré, élevage, arômes). Pas de discours festif ou incitatif.</div>
+   <div class="row2"><div><label>Prix (€)</label><input id="ePrix" inputmode="decimal" value="${p.prixManuel??""}" ${p.refTrouvee&&p.prixCaisse!=null?`placeholder="${eur(p.prixCaisse)} (caisse)" disabled`:""}></div>
+   <div><label>Prix promo (€)</label><input id="ePromo" inputmode="decimal" value="${p.promo??""}" placeholder="vide = pas de promo"></div></div>
+   ${p.refTrouvee&&p.prixCaisse!=null?`<div class="hint">Le prix vient automatiquement de la caisse.</div>`:""}
+   <label class="sw">Afficher dans l'appli<input type="checkbox" id="eAff" ${p.afficher?"checked":""}></label>
+   <label class="sw">Coup de cœur<input type="checkbox" id="eCdc" ${p.cdc?"checked":""}></label>
+   <label class="sw">Nouveauté<input type="checkbox" id="eNew" ${p.nouveau?"checked":""}></label>
+   <button class="btn" id="eSave" onclick="saveG()">Enregistrer</button><div class="err" id="eErr"></div></div>`;
+  ["fCam","fGal"].forEach(k=>$(k).onchange=e=>{const f=e.target.files[0]; if(f) envoiPhoto(f); e.target.value="";});
+  $("gerant").scrollTop=0;
+}
+async function saveG(){
+  const p=G.edit, nom=$("eNom").value.trim();
+  if(!nom) return $("eErr").textContent="Le nom est obligatoire.";
+  const champs={nom,ref:$("eRef").value.trim(),cat:$("eCat").value,region:$("eReg").value,desc:$("eDesc").value,
+    promo:$("ePromo").value.replace(",","."),afficher:$("eAff").checked,cdc:$("eCdc").checked,nouveau:$("eNew").checked};
+  if(!$("ePrix").disabled) champs.prix=$("ePrix").value.replace(",",".");
+  const b=$("eSave"); b.disabled=true; b.textContent="Enregistrement…";
+  try{ const j=await apiG("enregistrer",{id:p.id,champs}); G.produits=j.produits; toast("Enregistré ✓"); const n=G.produits.find(x=>x.id===p.id); if(n&&n.ref&&!n.refTrouvee){ editG(p.id); $("eErr").textContent="Enregistré, mais la réf caisse est introuvable dans l'onglet Stock."; } else listeG(); }
+  catch(e){ b.disabled=false; b.textContent="Enregistrer"; $("eErr").textContent=e.message; }
+}
+function reduireImage(file,max=1000,q=.82){
+  return new Promise((ok,ko)=>{
+    const url=URL.createObjectURL(file), im=new Image();
+    im.onload=()=>{ let w=im.naturalWidth,h=im.naturalHeight; const k=Math.min(1,max/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
+      const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(im,0,0,w,h); URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg",q)); };
+    im.onerror=()=>{URL.revokeObjectURL(url);ko(new Error("Image illisible"))}; im.src=url;
+  });
+}
+async function envoiPhoto(file){
+  const p=G.edit, box=$("gPh");
+  try{
+    const data=await reduireImage(file);
+    box.innerHTML=`<img src="${data}" style="opacity:.5"><div style="position:absolute;background:#000a;color:#fff;padding:6px 12px;border-radius:20px;font-size:.85rem">Envoi…</div>`;
+    const j=await apiG("photo",{id:p.id,data});
+    p.photo=j.photo; PH_CACHE[j.photo.slice(6)]=data;
+    box.innerHTML=`<img src="${data}">`; toast("Photo enregistrée ✓");
+  }catch(e){ box.innerHTML=`<span class="err">${esc(e.message)}</span>`; }
+}
+window.addEventListener("hashchange",()=>{ if(location.hash==="#gerant") ouvrirGerant(); });
+
 /* ===== Navigation & divers ===== */
 function go(s){ document.querySelectorAll("section").forEach(x=>x.classList.toggle("on",x.id===s)); document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.s===s)); window.scrollTo(0,0); }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.s));
@@ -363,6 +514,7 @@ function noAge(){ $("age").querySelector(".modal").innerHTML=`<h2>Désolé</h2><
 if(lire("cj_age",0)===1) $("age").remove();
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
 charger();
+if(location.hash==="#gerant") setTimeout(ouvrirGerant,300);
 </script>
 </body>
 </html>
