@@ -35,6 +35,21 @@ h2{font-size:1.25rem;margin:18px 0 10px;color:var(--bx)}
 .vis{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .vis img.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px;background:#f4ece0}
 .t-lim{background:#1a1210}
+.crow{background:#fff;border-radius:12px;padding:8px 10px;display:flex;gap:10px;align-items:center;margin-bottom:8px;cursor:pointer}
+.crow .cth{width:46px;height:58px;flex:none;border-radius:8px;background:#f4ece0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.crow .cth img{width:100%;height:100%;object-fit:contain}
+.crow .ci{flex:1;min-width:0}.crow .ci b{display:block;font-size:.88rem;line-height:1.25}
+.crow .ci small{display:block;font-size:.74rem;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .cp{text-align:right;flex:none}.crow .cp b{display:block;color:var(--bx);font-size:.95rem}.crow .cp s{display:block;font-size:.72rem;color:var(--mu)}
+.crow .cp .add{margin-top:4px;padding:5px 10px;font-size:.75rem}
+.mini{font-size:.62rem;font-weight:600;color:#fff;border-radius:8px;padding:1px 5px;margin-left:4px;vertical-align:1px}
+.install{background:#fff;border-radius:var(--r);padding:12px 14px;margin-top:12px;display:flex;align-items:center;gap:12px;border:2px solid var(--or)}
+.install img{width:46px;height:46px;border-radius:10px}
+.install .it{flex:1;font-size:.85rem;line-height:1.35}.install .it b{display:block;font-size:.95rem}
+.install .ib{background:var(--bx);color:#fff;border:0;border-radius:20px;padding:9px 14px;font-weight:600;font:inherit;font-size:.85rem;cursor:pointer;white-space:nowrap}
+.install .ix{background:none;border:0;color:var(--mu);font-size:1.2rem;cursor:pointer;padding:0 2px;align-self:flex-start}
+.etape{display:flex;gap:10px;align-items:center;background:#fff;border-radius:10px;padding:10px 12px;margin-top:8px;text-align:left;font-size:.9rem}
+.etape span.n{background:var(--bx);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex:none;font-weight:600}
 /* ---- Espace gérant ---- */
 #gerant{position:fixed;inset:0;background:var(--cr);z-index:15;overflow:auto;display:none;padding-bottom:40px}
 #gerant.on{display:block}
@@ -134,15 +149,19 @@ nav button.on{color:var(--bx);font-weight:600}
       <h3>Commandez, on prépare, vous passez !</h3>
       <p>Vins, whiskys, rhums, spiritueux, bières et épicerie fine. Composez votre panier, envoyez la commande, récupérez-la à la cave. Paiement sur place.</p>
     </div>
+    <div id="installBox"></div>
     <div id="accContent"><div class="loading">Chargement…</div></div>
   </section>
 
   <section id="catalogue">
     <h2>Catalogue</h2>
-    <input class="search" id="q" placeholder="Rechercher un produit, une région…" oninput="renderCat()">
-    <div class="chips" id="chips"></div>
-    <div class="grid" id="grid"></div>
-    <p class="note" style="text-align:center;margin-top:16px">Une sélection parmi plus de 1 500 références. Vous cherchez autre chose ? Indiquez-le en commentaire de votre commande.</p>
+    <input class="search" id="q" type="search" placeholder="Rechercher : morgon, whisky tourbé, IPA…" oninput="catPage=1;renderCat()">
+    <div class="chips" id="chipsU"></div>
+    <div class="chips" id="chipsF"></div>
+    <p class="note" id="catInfo" style="margin:0 0 8px"></p>
+    <div id="grid"></div>
+    <div id="plus"></div>
+    <p class="note" style="text-align:center;margin-top:16px">Prix et disponibilités mis à jour chaque semaine depuis la caisse : la cave vous confirme chaque commande. Vous cherchez autre chose ? Indiquez-le en commentaire.</p>
   </section>
 
   <section id="panier">
@@ -210,12 +229,55 @@ const DEMO = {
 /* ===== État ===== */
 let D = {produits:[],actus:[],categories:[],reglages:{}};
 let panier = lire("cj_panier",{}); let catSel="Tout"; let qFiche=1, idFiche=null;
-const COUL={"Vins rouges":"#6d1f2f","Vins blancs":"#d9c27a","Rosés":"#e7a1a6",Bulles:"#e8d9a0",Whiskys:"#b5741f",Rhums:"#7a4a22",Spiritueux:"#5d7f8a",Bières:"#c98a2e",Épicerie:"#7a8b55",Coffrets:"#3a2418"};
+const COUL={"Vins":"#6d1f2f","Bières & cidres":"#c98a2e","Spiritueux & apéritifs":"#9a6326","Sans alcool":"#5d7f8a","Accessoires":"#555","Autres":"#888","Vins rouges":"#6d1f2f","Vins blancs":"#d9c27a","Rosés":"#e7a1a6",Bulles:"#e8d9a0",Whiskys:"#b5741f",Rhums:"#7a4a22",Spiritueux:"#5d7f8a",Bières:"#c98a2e",Épicerie:"#7a8b55",Coffrets:"#3a2418"};
 const $=id=>document.getElementById(id);
 const eur=n=>Number(n).toFixed(2).replace(".",",")+" €";
 const prixDe=p=>(p.promo!=null&&p.promo!=="")?p.promo:p.prix;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const prod=id=>D.produits.find(p=>String(p.id)===String(id));
+let CAT=[], LISTE=[];
+const UNIVERS=["Vins","Bulles","Bières & cidres","Spiritueux & apéritifs","Sans alcool","Épicerie","Coffrets","Accessoires","Autres"];
+function univers(fam){
+  const f=String(fam||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+  if(/CHAMPAGNE|MOUSSEUX|CREMANT|BULLES/.test(f)) return "Bulles";
+  if(/SOFT|SANS ALCOOL/.test(f)) return "Sans alcool";
+  if(/WHISK|RHUM|ALCOOL|SPIRITUEUX|GIN|COGNAC|BIB APERO/.test(f)) return "Spiritueux & apéritifs";
+  if(/BIERE|DRAFT|FUT|CIDRE/.test(f)) return "Bières & cidres";
+  if(/EPICERIE/.test(f)) return "Épicerie";
+  if(/COFFRET/.test(f)) return "Coffrets";
+  if(/ACCESSOIRE/.test(f)) return "Accessoires";
+  if(/VIN|MAGNUM|BIB|ROSE|BLANC|ROUGE/.test(f)) return "Vins";
+  return "Autres";
+}
+const FAMNOM={"BIB VINS":"Vins en BIB","BIB APERO":"Apéritifs en BIB","MAGNUMS":"Magnums","DRAFT 6L":"Fûts 6 L","BIERES FUT 30L":"Fûts 30 L","BIERE 75CL BOUTEILLE":"Bières 75 cl","BIERE LOCALES":"Bières locales","BIERES FRANCE":"Bières de France","BIERES CRAFTS ETRANGERES":"Craft étrangères","BIERES BELGES / ALLEMAGNE":"Belges & allemandes","ALCOOLS AUTRES":"Autres alcools","RHUM ARRANGE":"Rhums arrangés","RHUM":"Rhums","WHISKY":"Whiskys","SOFT / SANS ALCOOL":"Softs & sans alcool","ETRANGERS VINS":"Vins étrangers","SUD OUEST VINS":"Sud-Ouest","RHONE VINS":"Rhône","SAVOIE JURA VIN":"Savoie & Jura","PROVENCE ET CORSE VIN":"Provence & Corse","CIDRE":"Cidres","EPICERIE":"Épicerie","ACCESSOIRES":"Accessoires","CHAMPAGNE":"Champagne","MOUSSEUX":"Mousseux & crémants"};
+function famLabel(fam){
+  const k=String(fam||"").trim().toUpperCase(); if(FAMNOM[k]) return FAMNOM[k];
+  const t=k.replace(/\s+VINS?$/,"").toLowerCase(); return t?t.charAt(0).toUpperCase()+t.slice(1):"Autres";
+}
+function depuisCat(a){
+  const [id,d,fam,prix,lim]=a;
+  return {id,nom:nomPropre(d)||d,des:d,fam,cat:famLabel(fam),univ:univers(fam),region:"",desc:descPropre(d),prix,promo:null,nouveau:false,cdc:false,photo:"",limite:!!lim};
+}
+const UNIV_CAT={"Vins rouges":"Vins","Vins blancs":"Vins","Rosés":"Vins","Bulles":"Bulles","Whiskys":"Spiritueux & apéritifs","Rhums":"Spiritueux & apéritifs","Spiritueux":"Spiritueux & apéritifs","Bières":"Bières & cidres","Épicerie":"Épicerie","Coffrets":"Coffrets"};
+function construireListe(){
+  CAT=(D.catalogue||[]);
+  const parId={}; CAT.forEach(a=>parId[a[0]]=a);
+  LISTE=[];
+  const vus={};
+  D.produits.forEach(p=>{
+    const a=p.lien&&parId[p.lien];
+    if(a) vus[a[0]]=1;
+    const fam=a?a[2]:p.cat;
+    LISTE.push({id:p.id,v:1,fam:a?famLabel(a[2]):p.cat,univ:a?univers(a[2]):(UNIV_CAT[p.cat]||univers(p.cat)),txt:normTxt(p.nom+" "+(a?a[1]:"")+" "+p.region+" "+p.desc+" "+fam),nom:p.nom,cdc:p.cdc});
+  });
+  CAT.forEach(a=>{ if(vus[a[0]]) return; const n=nomPropre(a[1])||a[1];
+    LISTE.push({id:a[0],v:0,fam:famLabel(a[2]),univ:univers(a[2]),txt:normTxt(a[1]+" "+n+" "+a[2]+" "+famLabel(a[2])),nom:n,cdc:false}); });
+  LISTE.sort((x,y)=>(y.v-x.v)||(y.cdc-x.cdc)||x.nom.localeCompare(y.nom,"fr"));
+}
+const prod=id=>{
+  id=String(id);
+  if(id.startsWith("c:")){ const a=CAT.find(x=>x[0]===id); if(!a) return null; if(a[5]){ const v=D.produits.find(p=>String(p.id)===String(a[5])); if(v) return v; } return depuisCat(a); }
+  return D.produits.find(p=>String(p.id)===id);
+};
 function lire(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
 function ecrire(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
@@ -238,9 +300,9 @@ function banner(t){ $("banner").textContent=t; $("banner").style.display="block"
 
 /* ===== Affichage ===== */
 function vis(p){
-  const c=COUL[p.cat]||"#888"; let shape;
-  if(p.cat==="Bières") shape=`<rect x="44" y="30" width="32" height="70" rx="6" fill="${c}"/><rect x="44" y="50" width="32" height="24" fill="#fff" opacity=".85"/>`;
-  else if(p.cat==="Épicerie") shape=`<rect x="38" y="44" width="44" height="54" rx="8" fill="${c}"/><rect x="36" y="36" width="48" height="12" rx="3" fill="#444"/><rect x="42" y="60" width="36" height="20" fill="#fff" opacity=".85"/>`;
+  const c=COUL[p.cat]||COUL[p.univ]||"#888"; let shape;
+  if(p.cat==="Bières"||p.univ==="Bières & cidres") shape=`<rect x="44" y="30" width="32" height="70" rx="6" fill="${c}"/><rect x="44" y="50" width="32" height="24" fill="#fff" opacity=".85"/>`;
+  else if(p.cat==="Épicerie"||p.univ==="Épicerie") shape=`<rect x="38" y="44" width="44" height="54" rx="8" fill="${c}"/><rect x="36" y="36" width="48" height="12" rx="3" fill="#444"/><rect x="42" y="60" width="36" height="20" fill="#fff" opacity=".85"/>`;
   else if(p.cat==="Coffrets") shape=`<rect x="26" y="40" width="68" height="58" rx="4" fill="${c}"/><rect x="56" y="40" width="8" height="58" fill="#b8893a"/><rect x="26" y="62" width="68" height="8" fill="#b8893a"/>`;
   else shape=`<path d="M53 8h14v26c0 6 9 10 9 22v44a4 4 0 0 1-4 4H48a4 4 0 0 1-4-4V56c0-12 9-16 9-22z" fill="${c}"/><rect x="44" y="64" width="32" height="24" fill="#fff" opacity=".85"/>`;
   let t=""; if(p.promo) t+=`<span class="tag t-promo">Promo</span>`; if(p.nouveau) t+=`<span class="tag t-new">Nouveau</span>`; if(p.cdc) t+=`<span class="tag t-cdc">Coup de cœur</span>`; if(p.limite) t+=`<span class="tag t-lim">Derniers exemplaires</span>`;
@@ -253,13 +315,14 @@ function carte(p){
 }
 function bloc(titre,liste){ return liste.length?`<h2>${titre}</h2><div class="row">${liste.map(carte).join("")}</div>`:""; }
 function afficher(){
+  construireListe();
   const P=D.produits;
   $("accContent").innerHTML =
     (D.actus.length?`<h2>Actualités</h2>`+D.actus.map(a=>`<div class="news"><small>${esc(a.date)}</small><h3>${esc(a.titre)}</h3><p>${esc(a.texte)}</p></div>`).join(""):"")
     + bloc("Coups de cœur de Jaby",P.filter(p=>p.cdc))
     + bloc("Promotions",P.filter(p=>p.promo))
     + bloc("Nouveautés",P.filter(p=>p.nouveau))
-    + `<button class="btn alt" onclick="go('catalogue')">Voir tout le catalogue</button>`;
+    + `<button class="btn alt" onclick="go('catalogue')">Voir tout le catalogue${LISTE.length>20?` (${LISTE.length} produits)`:""}</button>`;
   const R=D.reglages||{};
   if(R["Message sanitaire"]) $("evin").textContent=R["Message sanitaire"];
   const h=(R["Horaires cave"]||"").split("·").map(s=>esc(s.trim())).join("<br>");
@@ -275,14 +338,43 @@ function afficher(){
   for(const id of Object.keys(panier)) if(!prod(id)) delete panier[id];
   renderCat(); maj();
 }
+let catU="Tout", catF="", catPage=1;
+function vignette(p){
+  const ph=p.photo?imgTag(p.photo,""):"";
+  if(ph) return ph;
+  const c=COUL[p.cat]||COUL[p.univ]||"#888";
+  if(p.univ==="Bières & cidres"||p.cat==="Bières") return `<svg viewBox="0 0 40 52" width="30" height="40"><rect x="12" y="6" width="16" height="42" rx="4" fill="${c}"/><rect x="12" y="18" width="16" height="12" fill="#fff" opacity=".85"/></svg>`;
+  if(p.univ==="Épicerie"||p.cat==="Épicerie") return `<svg viewBox="0 0 40 52" width="30" height="40"><rect x="8" y="16" width="24" height="30" rx="5" fill="${c}"/><rect x="7" y="10" width="26" height="7" rx="2" fill="#444"/></svg>`;
+  return `<svg viewBox="0 0 40 52" width="30" height="40"><path d="M17 2h6v11c0 3 5 4 5 10v24a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V23c0-6 5-7 5-10z" fill="${c}"/><rect x="12" y="28" width="16" height="10" fill="#fff" opacity=".85"/></svg>`;
+}
+function ligneCat(e){
+  const p=prod(e.id); if(!p) return "";
+  const tags=(p.promo?`<span class="mini" style="background:#c0392b">Promo</span>`:"")+(p.cdc?`<span class="mini" style="background:var(--or)">❤</span>`:"")+(p.nouveau?`<span class="mini" style="background:var(--ok)">Nouveau</span>`:"")+(p.limite?`<span class="mini" style="background:#1a1210">Derniers</span>`:"");
+  return `<div class="crow" onclick="fiche('${esc(p.id)}')"><div class="cth">${vignette(p)}</div>
+   <div class="ci"><b>${esc(p.nom)}${tags}</b><small>${esc(e.fam)}${p.desc?" · "+esc(p.desc):""}</small></div>
+   <div class="cp">${p.promo?`<s>${eur(p.prix)}</s>`:""}<b>${eur(prixDe(p))}</b><button class="add" onclick="event.stopPropagation();fiche('${esc(p.id)}')">Ajouter</button></div></div>`;
+}
 function renderCat(){
-  const cats=["Tout",...(D.categories||[]).filter(c=>D.produits.some(p=>p.cat===c))];
-  D.produits.forEach(p=>{if(!cats.includes(p.cat))cats.push(p.cat)});
-  $("chips").innerHTML=cats.map(c=>`<button class="chip ${c===catSel?"on":""}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
-  $("chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{catSel=b.dataset.c;renderCat()});
-  const q=$("q").value.toLowerCase().trim();
-  const l=D.produits.filter(p=>(catSel==="Tout"||p.cat===catSel)&&(!q||(p.nom+" "+p.region+" "+p.cat+" "+p.desc).toLowerCase().includes(q)));
-  $("grid").innerHTML=l.length?l.map(carte).join(""):`<div class="empty">Aucun produit trouvé.</div>`;
+  const q=normTxt($("q").value).trim(), mots=q?q.split(/\s+/):[];
+  const base=LISTE.filter(e=>mots.every(m=>e.txt.includes(m)));
+  const nbU={}; base.forEach(e=>nbU[e.univ]=(nbU[e.univ]||0)+1);
+  const us=UNIVERS.filter(u=>nbU[u]);
+  if(catU!=="Tout"&&!nbU[catU]){ catU="Tout"; catF=""; }
+  $("chipsU").innerHTML=[["Tout",base.length],...us.map(u=>[u,nbU[u]])].map(([u,n])=>`<button class="chip ${u===catU?"on":""}" data-u="${esc(u)}">${esc(u)} <span style="opacity:.6">${n}</span></button>`).join("");
+  $("chipsU").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{catU=b.dataset.u;catF="";catPage=1;renderCat()});
+  let L=catU==="Tout"?base:base.filter(e=>e.univ===catU);
+  if(catU!=="Tout"){
+    const nbF={}; L.forEach(e=>nbF[e.fam]=(nbF[e.fam]||0)+1);
+    const fs=Object.keys(nbF).sort((a,b)=>a.localeCompare(b,"fr"));
+    if(catF&&!nbF[catF]) catF="";
+    $("chipsF").innerHTML=fs.length>1?[["",L.length],...fs.map(f=>[f,nbF[f]])].map(([f,n])=>`<button class="chip ${f===catF?"on":""}" style="font-size:.76rem;padding:4px 10px" data-f="${esc(f)}">${f?esc(f):"Toutes"} <span style="opacity:.6">${n}</span></button>`).join(""):"";
+    $("chipsF").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{catF=b.dataset.f;catPage=1;renderCat()});
+    if(catF) L=L.filter(e=>e.fam===catF);
+  } else $("chipsF").innerHTML="";
+  const N=30*catPage;
+  $("catInfo").textContent=L.length?`${L.length} produit${L.length>1?"s":""}${q?" trouvé"+(L.length>1?"s":""):""}`:"";
+  $("grid").innerHTML=L.length?L.slice(0,N).map(ligneCat).join(""):`<div class="empty">Aucun produit trouvé.${q?"<br>Essayez un autre mot, ou demandez-le en commentaire de votre commande.":""}</div>`;
+  $("plus").innerHTML=L.length>N?`<button class="btn alt" onclick="catPage++;renderCat()">Voir plus (${L.length-N} autres)</button>`:"";
 }
 
 /* ===== Fiche produit ===== */
@@ -425,6 +517,11 @@ async function chargerG(){
   try{ const j=await apiG("liste"); G.produits=j.produits; G.categories=j.categories; listeG(); }
   catch(e){ if(/code/i.test(e.message)){ G.code=""; ecrire("cj_code",""); loginG(e.message); } else $("gerant").querySelector(".gb").innerHTML=`<div class="empty">${esc(e.message)}<br><br><button class="btn alt" onclick="chargerG()">Réessayer</button></div>`; }
 }
+async function ajouterG(){
+  const b=$("gAdd"); b.disabled=true; b.textContent="Création…";
+  try{ const j=await apiG("ajouter",{}); G.produits=j.produits; editG(j.id); toast("Nouvel emplacement créé"); }
+  catch(e){ b.disabled=false; b.textContent="➕ Ajouter un produit à la vitrine"; toast(e.message); }
+}
 function etatRef(p){
   if(!p.ref) return `<span class="hint">Pas de réf caisse</span>`;
   if(!p.refTrouvee) return `<span class="ko">✘ Réf ${esc(p.ref)} introuvable dans le stock</span>`;
@@ -444,6 +541,7 @@ function listeG(){
    <p class="note" style="margin:0 0 10px">${nbNom} produits saisis sur ${G.produits.length} · ${nbPh} avec photo</p>
    <input class="search" id="gQ" placeholder="Rechercher…" value="${esc(G.q||"")}">
    <div class="chips">${Object.entries(F).map(([k,v])=>`<button class="chip ${G.filtre===k?"on":""}" onclick="G.filtre='${k}';listeG()">${v}</button>`).join("")}</div>
+   <button class="btn" style="margin:4px 0 12px" id="gAdd" onclick="ajouterG()">➕ Ajouter un produit à la vitrine</button>
    ${L.map(p=>`<div class="gitem" onclick="editG('${p.id}')"><div class="th">${p.photo?imgTag(p.photo,""):(p.nom?"📷":"➕")}</div>
      <div class="gi"><b>${p.nom?esc(p.nom):`<span style="color:var(--mu)">Emplacement libre</span>`}${!p.afficher&&p.nom?`<span class="pill">masqué</span>`:""}${p.stock===0?`<span class="pill">épuisé</span>`:""}</b>
      <small>${esc(p.cat)} · ${p.prix!=null?eur(p.prix):"pas de prix"}${p.promo!=null?" → promo "+eur(p.promo):""}${p.cdc?" · ❤":""}${p.nouveau?" · Nouveau":""}</small><small>${etatRef(p)}</small></div></div>`).join("")||`<div class="empty">Aucun produit.</div>`}
@@ -454,13 +552,16 @@ function editG(id){
   const p=G.produits.find(x=>x.id===String(id)); if(!p) return; G.edit=p;
   const cats=G.categories.map(c=>`<option ${c===p.cat?"selected":""}>${esc(c)}</option>`).join("");
   $("gerant").innerHTML=ghead(p.nom?"Modifier":"Nouveau produit","listeG()")+`<div class="gb">
+   <label style="margin-top:0">🔎 Chercher dans le stock DigiCave</label>
+   <input id="eSrch" placeholder="Ex. : beauregard, fontanel, saint amour…" autocomplete="off">
+   <div id="eRes"></div>
    <div class="phbox" id="gPh">${p.photo?imgTag(p.photo,""):`<span style="color:var(--mu)">Pas encore de photo</span>`}</div>
    <div class="row2"><button class="btn" onclick="$('fCam').click()">📷 Prendre la photo</button><button class="btn alt" onclick="$('fGal').click()">🖼 Galerie</button></div>
    <input type="file" id="fCam" accept="image/*" capture="environment" hidden><input type="file" id="fGal" accept="image/*" hidden>
    <p class="hint">Bouteille seule, de face, fond clair, en hauteur. La photo est recadrée et allégée automatiquement.</p>
    <label>Nom affiché *</label><input id="eNom" value="${esc(p.nom)}" placeholder="Ex. : Champagne Beauregard Blanc de Blancs">
    <label>Réf caisse (DigiCave)</label><input id="eRef" value="${esc(p.ref)}" placeholder="Ex. : BEAUREGARD2" autocapitalize="characters">
-   <div class="hint">${etatRef(p)}</div>
+   <div class="hint" id="eEtat">${etatRef(p)}</div>
    <label>Catégorie</label><select id="eCat">${cats}</select>
    <label>Région / origine</label><input id="eReg" value="${esc(p.region)}">
    <label>Description</label><textarea id="eDesc" rows="3" placeholder="Cépage, appellation, élevage, contenance…">${esc(p.desc)}</textarea>
@@ -473,7 +574,58 @@ function editG(id){
    <label class="sw">Nouveauté<input type="checkbox" id="eNew" ${p.nouveau?"checked":""}></label>
    <button class="btn" id="eSave" onclick="saveG()">Enregistrer</button><div class="err" id="eErr"></div></div>`;
   ["fCam","fGal"].forEach(k=>$(k).onchange=e=>{const f=e.target.files[0]; if(f) envoiPhoto(f); e.target.value="";});
+  $("eSrch").oninput=e=>rechStock(e.target.value);
+  chargerStockG();
   $("gerant").scrollTop=0;
+}
+/* --- recherche dans le stock DigiCave --- */
+async function chargerStockG(){
+  if(G.stock||G.stockEnCours) return; G.stockEnCours=true;
+  try{ const j=await apiG("stock"); G.stock=j.stock; }catch(e){ G.stock=null; }
+  G.stockEnCours=false;
+}
+const normTxt=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const normR=t=>String(t||"").toUpperCase().replace(/\s+/g," ").trim();
+function rechStock(q){
+  const box=$("eRes"); q=normTxt(q).trim();
+  if(q.length<2){ box.innerHTML=""; return; }
+  if(!G.stock){ box.innerHTML=`<p class="hint">Chargement du stock…</p>`; chargerStockG().then(()=>rechStock($("eSrch").value)); return; }
+  const mots=q.split(/\s+/);
+  const qr=normR(q);
+  const score=s=>{const r=normR(s[0]); return r===qr?0:r.startsWith(qr)?1:2;};
+  const res=G.stock.filter(s=>{const t=normTxt(s[0]+" "+s[1]+" "+s[2]);return mots.every(m=>t.includes(m));})
+    .sort((x,y)=>score(x)-score(y)||((y[4]>0)-(x[4]>0))).slice(0,10);
+  const utilisees={}; G.produits.forEach(p=>{ if(p.ref&&p.id!==G.edit.id) utilisees[normR(p.ref)]=p.nom||"un autre emplacement"; });
+  box.innerHTML=res.length?res.map((s,i)=>`<div class="gitem" style="margin:6px 0" data-i="${i}"><div class="gi"><b style="white-space:normal">${esc(s[1])}</b>
+    <small>${esc(s[0])} · ${esc(s[2])} · ${s[3]!=null?eur(s[3]):"—"} · ${s[4]==null?"pas dans l'inventaire":s[4]>0?"stock "+s[4]:`<span class="ko">épuisé</span>`}${utilisees[normR(s[0])]?` · <span class="ko">déjà utilisé : ${esc(utilisees[normR(s[0])])}</span>`:""}</small></div></div>`).join("")
+    :`<p class="hint">Aucune référence trouvée.</p>`;
+  box.querySelectorAll(".gitem").forEach(el=>el.onclick=()=>choisirStock(res[+el.dataset.i]));
+}
+function nomPropre(d){
+  let t=String(d||"").replace(/\u00a0/g," ").replace(/\s+/g," ").split(/\s\d+([.,]\d+)?\s?(CL|L)\b/i)[0];
+  t=t.replace(/\s+(AOP|AOC|IGP|VDF)\b.*$/i,"").trim();
+  t=t.toLowerCase().replace(/(^|[\s'’(-])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());
+  return t.replace(/ (De|Du|Des|La|Le|Les|Et|Au|Aux|En|Sur|Sous|À|D'|L')(?= )/g,m=>m.toLowerCase());
+}
+function descPropre(d){
+  const m=String(d||"").match(/\b(\d+(?:[.,]\d+)?)\s?(CL|L)\b\s*(.*)$/i); if(!m) return "";
+  let reste=m[3].replace(/\s\d+([.,]\d+)?\s?L$/i,"").replace(/\b(AOP|AOC|IGP)\s+\1\b/gi,"$1").trim();
+  reste=reste.toLowerCase().replace(/\b(aop|aoc|igp|vdf)\b/g,x=>x.toUpperCase()).replace(/(\d+)%/g,"$1 %");
+  reste=reste.replace(/\b(AOP|AOC|IGP|VDF)\s+(\p{L})/gu,(m,x,y)=>x+" "+y.toUpperCase());
+  const nb=parseFloat(String(m[1]).replace(",","."));
+  const vol=m[2].toUpperCase()==="CL"?m[1]+" cl":(nb<1?Math.round(nb*100)+" cl":String(m[1]).replace(".",",")+" L");
+  return (reste?reste.charAt(0).toUpperCase()+reste.slice(1)+", ":"")+vol+".";
+}
+function regionDe(fam){ const f=String(fam||"").replace(/\b(VINS?|ET CORSE)\b/gi,"").trim(); return /^(RHUM|WHISKY|GIN|BIERE|BIÈRE|MAGNUMS?|SPIRITUEUX)/i.test(f)?"":f.charAt(0)+f.slice(1).toLowerCase(); }
+function choisirStock(s){
+  $("eRef").value=s[0];
+  if(!$("eNom").value.trim()) $("eNom").value=nomPropre(s[1]);
+  if(!$("eDesc").value.trim()) $("eDesc").value=descPropre(s[1]);
+  if(!$("eReg").value.trim()) $("eReg").value=regionDe(s[2]);
+  $("eEtat").innerHTML=`<span class="ok">✔ ${esc(s[0])}</span> · caisse ${s[3]!=null?eur(s[3]):"—"} · stock ${s[4]??"—"}`;
+  if(s[3]!=null){ const pr=$("ePrix"); pr.value=String(s[3]).replace(".",","); pr.disabled=true; pr.style.background="#eee"; }
+  $("eRes").innerHTML=""; $("eSrch").value="";
+  toast("Référence choisie – vérifiez le nom et la description");
 }
 async function saveG(){
   const p=G.edit, nom=$("eNom").value.trim();
@@ -505,6 +657,43 @@ async function envoiPhoto(file){
 }
 window.addEventListener("hashchange",()=>{ if(location.hash==="#gerant") ouvrirGerant(); });
 
+/* ===== Bouton « Installer l'appli » ===== */
+let promptInstall=null;
+const estInstallee=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const estIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const estMobile=()=>/android|iphone|ipad|ipod/i.test(navigator.userAgent)||estIOS();
+function afficherInstall(){
+  const box=$("installBox"); if(!box) return;
+  const plusTard=lire("cj_install_plustard",0);
+  if(estInstallee()||!estMobile()||(plusTard&&Date.now()-plusTard<7*864e5)){ box.innerHTML=""; return; }
+  box.innerHTML=`<div class="install"><img src="icon-192.png" alt=""><div class="it"><b>Installez l'appli</b>Retrouvez la cave en un geste, depuis votre écran d'accueil.</div>
+   <button class="ib" onclick="installer()">📲 Installer</button><button class="ix" aria-label="Plus tard" onclick="ecrire('cj_install_plustard',Date.now());afficherInstall()">×</button></div>`;
+}
+async function installer(){
+  if(promptInstall){
+    promptInstall.prompt();
+    const r=await promptInstall.userChoice.catch(()=>({}));
+    promptInstall=null;
+    if(r.outcome==="accepted"){ toast("Installation en cours…"); $("installBox").innerHTML=""; }
+    return;
+  }
+  const ios=estIOS();
+  $("modalHost").innerHTML=`<div class="overlay" id="ovI"><div class="modal" style="text-align:center">
+   <img src="icon-192.png" alt="" style="width:64px;border-radius:14px"><h2 style="margin-top:8px">Installer l'appli</h2>
+   ${ios?`<div class="etape"><span class="n">1</span><span>Touchez le bouton <b>Partager</b> <span style="font-size:1.3rem">⬆️</span> en bas de l'écran (dans Safari)</span></div>
+   <div class="etape"><span class="n">2</span><span>Faites défiler et touchez <b>« Sur l'écran d'accueil »</b> ➕</span></div>
+   <div class="etape"><span class="n">3</span><span>Touchez <b>Ajouter</b> en haut à droite</span></div>
+   <p class="note">Sur iPhone, l'installation se fait depuis <b>Safari</b>. Si vous êtes dans un autre navigateur, ouvrez d'abord cette page dans Safari.</p>`
+   :`<div class="etape"><span class="n">1</span><span>Touchez le menu <b>⋮</b> en haut à droite du navigateur</span></div>
+   <div class="etape"><span class="n">2</span><span>Touchez <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b></span></div>
+   <div class="etape"><span class="n">3</span><span>Confirmez avec <b>Installer</b> ou <b>Ajouter</b></span></div>
+   <p class="note">Astuce : avec <b>Chrome</b>, l'installation se fait en un seul geste.</p>`}
+   <button class="btn" onclick="fermerModal()">J'ai compris</button></div></div>`;
+  $("ovI").onclick=e=>{if(e.target.id==="ovI")fermerModal()};
+}
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); promptInstall=e; afficherInstall(); });
+window.addEventListener("appinstalled",()=>{ promptInstall=null; const b=$("installBox"); if(b) b.innerHTML=""; toast("Appli installée ✓"); });
+
 /* ===== Navigation & divers ===== */
 function go(s){ document.querySelectorAll("section").forEach(x=>x.classList.toggle("on",x.id===s)); document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.s===s)); window.scrollTo(0,0); }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.s));
@@ -513,6 +702,7 @@ function okAge(){ ecrire("cj_age",1); $("age").remove(); }
 function noAge(){ $("age").querySelector(".modal").innerHTML=`<h2>Désolé</h2><p style="margin-top:10px">Cette application est réservée aux personnes majeures.</p>`; }
 if(lire("cj_age",0)===1) $("age").remove();
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+afficherInstall();
 charger();
 if(location.hash==="#gerant") setTimeout(ouvrirGerant,300);
 </script>
