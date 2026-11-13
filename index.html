@@ -465,9 +465,9 @@ function editG(id){
    <label>Région / origine</label><input id="eReg" value="${esc(p.region)}">
    <label>Description</label><textarea id="eDesc" rows="3" placeholder="Cépage, appellation, élevage, contenance…">${esc(p.desc)}</textarea>
    <div class="hint">Loi Évin : rester factuel (origine, cépage, degré, élevage, arômes). Pas de discours festif ou incitatif.</div>
-   <div class="row2"><div><label>Prix (€)</label><input id="ePrix" inputmode="decimal" value="${p.prixManuel??""}" ${p.refTrouvee&&p.prixCaisse!=null?`placeholder="${eur(p.prixCaisse)} (caisse)" disabled`:""}></div>
+   <div class="row2"><div><label>Prix (€)${p.refTrouvee&&p.prixCaisse!=null?" – caisse":""}</label><input id="ePrix" inputmode="decimal" ${p.refTrouvee&&p.prixCaisse!=null?`value="${String(p.prixCaisse).replace(".",",")}" disabled style="background:#eee;font-weight:600"`:`value="${p.prixManuel??""}"`}></div>
    <div><label>Prix promo (€)</label><input id="ePromo" inputmode="decimal" value="${p.promo??""}" placeholder="vide = pas de promo"></div></div>
-   ${p.refTrouvee&&p.prixCaisse!=null?`<div class="hint">Le prix vient automatiquement de la caisse.</div>`:""}
+   ${p.refTrouvee&&p.prixCaisse!=null?`<div class="hint">Prix automatique : il vient de DigiCave (onglet Stock). Pour le changer, modifiez-le dans la caisse puis recollez l'export.</div>`:`<div class="hint">Pas de réf caisse trouvée : c'est ce prix qui est affiché.</div>`}
    <label class="sw">Afficher dans l'appli<input type="checkbox" id="eAff" ${p.afficher?"checked":""}></label>
    <label class="sw">Coup de cœur<input type="checkbox" id="eCdc" ${p.cdc?"checked":""}></label>
    <label class="sw">Nouveauté<input type="checkbox" id="eNew" ${p.nouveau?"checked":""}></label>
