@@ -49,7 +49,7 @@ h2{font-size:1.25rem;margin:18px 0 10px;color:var(--bx)}
 .crow .ci small{display:block;font-size:.74rem;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crow .cp{text-align:right;flex:none}.crow .cp b{display:block;color:var(--bx);font-size:.95rem}.crow .cp s{display:block;font-size:.72rem;color:var(--mu)}
 .crow .cp .add{margin-top:4px;padding:5px 10px;font-size:.75rem}
-.mini{font-size:.62rem;font-weight:600;color:#fff;border-radius:8px;padding:1px 5px;margin-left:4px;vertical-align:1px}
+.mini{font-size:.62rem;font-weight:600;color:#fff;border-radius:8px;padding:1px 5px;margin-left:4px;vertical-align:1px;white-space:nowrap;display:inline-block}
 .install{background:#fff;border-radius:var(--r);padding:12px 14px;margin-top:12px;display:flex;align-items:center;gap:12px;border:2px solid var(--or)}
 .install img{width:46px;height:46px;border-radius:10px}
 .install .it{flex:1;font-size:.85rem;line-height:1.35}.install .it b{display:block;font-size:.95rem}
@@ -149,11 +149,7 @@ nav button.on{color:var(--bx);font-weight:600}
   <img src="logo.jpg" alt="La Cave de Jaby">
   <div><h1>La Cave de Jaby</h1><p>Caviste à Saint-André-de-la-Marche</p></div>
 </header>
-<div id="modeG" style="display:none;background:#1a1210;color:#fff;font-size:.8rem;padding:7px 14px;position:sticky;top:85px;z-index:4;align-items:center;gap:8px;border-bottom:2px solid var(--or)">
-  <span style="flex:1">✏️ <b>Mode gérant</b> : touchez un produit, puis « Modifier »</span>
-  <button onclick="ouvrirGerant()" style="background:none;border:1px solid #fff6;color:#fff;border-radius:8px;padding:4px 8px;font:inherit;font-size:.75rem">Outils</button>
-  <button onclick="quitterGerant()" style="background:none;border:1px solid #fff6;color:#fff;border-radius:8px;padding:4px 8px;font:inherit;font-size:.75rem">Quitter</button>
-</div>
+<button id="modeG" aria-label="Gérant" onclick="menuGerant()" style="display:none;position:fixed;right:14px;bottom:88px;z-index:7;width:44px;height:44px;border-radius:50%;border:0;background:#1a1210;color:#fff;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.3);align-items:center;justify-content:center;cursor:pointer">✏️</button>
 
 <main>
   <section id="accueil" class="on">
@@ -182,6 +178,11 @@ nav button.on{color:var(--bx);font-weight:600}
     <div id="form"></div>
   </section>
 
+  <section id="promos">
+    <h2>Promotions</h2>
+    <div id="promoList"></div>
+  </section>
+
   <section id="infos">
     <h2>La cave</h2>
     <div id="infosContent"></div>
@@ -195,6 +196,7 @@ nav button.on{color:var(--bx);font-weight:600}
   <button data-s="accueil" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
   <button data-s="catalogue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2h4v5l2 3v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10l2-3z"/></svg>Catalogue</button>
   <button data-s="panier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14l-1.5 12a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Panier<span class="badge" id="badge" style="display:none">0</span></button>
+  <button data-s="promos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/></svg>Promos<span class="badge" id="badgeP" style="display:none;background:var(--or)">0</span></button>
   <button data-s="infos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Infos</button>
 </nav>
 
@@ -332,10 +334,13 @@ function afficher(){
   const P=D.produits;
   $("accContent").innerHTML =
     (D.actus.length?`<h2>Actualités</h2>`+D.actus.map(a=>`<div class="news"><small>${esc(a.date)}</small><h3>${esc(a.titre)}</h3><p>${esc(a.texte)}</p></div>`).join(""):"")
-    + bloc("Coups de cœur de Jaby",P.filter(p=>p.cdc))
     + bloc("Promotions",P.filter(p=>p.promo))
+    + bloc("Coups de cœur de Jaby",P.filter(p=>p.cdc))
     + bloc("Nouveautés",P.filter(p=>p.nouveau))
     + `<button class="btn alt" onclick="go('catalogue')">Voir tout le catalogue${LISTE.length>20?` (${LISTE.length} produits)`:""}</button>`;
+  const promos=P.filter(p=>p.promo).sort((a,b)=>(1-b.promo/b.prix)-(1-a.promo/a.prix));
+  $("badgeP").style.display=promos.length?"inline":"none"; $("badgeP").textContent=promos.length;
+  $("promoList").innerHTML=promos.length?promos.map(p=>{ const a=p.lien&&CAT.find(x=>x[0]===p.lien); return ligneCat({id:p.id,fam:a?famLabel(a[2]):p.cat}); }).join(""):`<div class="empty">Pas de promotion en ce moment.<br>Revenez bientôt !</div>`;
   const R=D.reglages||{};
   if(R["Message sanitaire"]) $("evin").textContent=R["Message sanitaire"];
   const h=(R["Horaires cave"]||"").split("·").map(s=>esc(s.trim())).join("<br>");
@@ -362,7 +367,7 @@ function vignette(p){
 }
 function ligneCat(e){
   const p=prod(e.id); if(!p) return "";
-  const tags=(p.promo?`<span class="mini" style="background:#c0392b">Promo</span>`:"")+(p.cdc?`<span class="mini" style="background:var(--or)">❤</span>`:"")+(p.nouveau?`<span class="mini" style="background:var(--ok)">Nouveau</span>`:"")+(p.limite?`<span class="mini" style="background:#1a1210">Derniers</span>`:"");
+  const tags=(p.promo?`<span class="mini" style="background:#c0392b">−${Math.round((1-p.promo/p.prix)*100)} %</span>`:"")+(p.cdc?`<span class="mini" style="background:var(--or)">❤</span>`:"")+(p.nouveau?`<span class="mini" style="background:var(--ok)">Nouveau</span>`:"")+(p.limite?`<span class="mini" style="background:#1a1210">Derniers</span>`:"");
   return `<div class="crow" onclick="fiche('${esc(p.id)}')"><div class="cth">${vignette(p)}</div>
    <div class="ci"><b>${esc(p.nom)}${tags}</b><small>${esc(e.fam)}${p.desc?" · "+esc(p.desc):""}</small></div>
    <div class="cp">${p.promo?`<s>${eur(p.prix)}</s>`:""}<b>${eur(prixDe(p))}</b><button class="add" onclick="event.stopPropagation();fiche('${esc(p.id)}')">Ajouter</button></div></div>`;
@@ -528,6 +533,13 @@ function ouvrirGerant(){
   if(G.code) chargerG(); else loginG();
 }
 function majModeG(){ const b=$("modeG"); if(b) b.style.display=G.code&&API_URL?"flex":"none"; }
+function menuGerant(){
+  $("modalHost").innerHTML=`<div class="overlay sheetwrap" id="ovM"><div class="sheet">
+   <h2 style="margin-top:0">✏️ Gérant</h2><p class="note">Pour modifier un produit : touchez-le, puis « Modifier ce produit ».</p>
+   <button class="btn" onclick="fermerModal();ouvrirGerant()">Outils gérant</button>
+   <button class="btn alt" onclick="fermerModal();quitterGerant()">Quitter le mode gérant</button></div></div>`;
+  $("ovM").onclick=e=>{if(e.target.id==="ovM")fermerModal()};
+}
 function quitterGerant(){ G.code=""; ecrire("cj_code",""); G.produits=[]; G.stock=null; majModeG(); toast("Mode gérant désactivé"); }
 /** Depuis la fiche client : ouvre l'édition du produit (le crée dans le tableau au premier enregistrement) */
 async function modifierProduit(id){
@@ -603,6 +615,21 @@ function ficheCatG(s){
     catch(e){ b.disabled=false; toast(e.message); } };
   $("gerant").scrollTop=0;
 }
+function changerCodeG(){
+  $("gerant").innerHTML=ghead("Changer le code","listeG()")+`<div class="gb"><div class="info">
+   <b>Nouveau code gérant</b><div class="hint">4 à 8 chiffres. Il remplace l'ancien tout de suite, sur tous les téléphones.</div>
+   <label>Nouveau code</label><input id="c1" type="password" inputmode="numeric" maxlength="8" style="font-size:1.3rem;text-align:center;letter-spacing:6px">
+   <label>Retapez-le</label><input id="c2" type="password" inputmode="numeric" maxlength="8" style="font-size:1.3rem;text-align:center;letter-spacing:6px">
+   <button class="btn" id="cOk">Enregistrer le nouveau code</button><div class="err" id="cErr"></div></div></div>`;
+  $("cOk").onclick=async()=>{
+    const a=$("c1").value.trim(), b=$("c2").value.trim();
+    if(!/^\d{4,8}$/.test(a)) return $("cErr").textContent="Le code doit contenir 4 à 8 chiffres.";
+    if(a!==b) return $("cErr").textContent="Les deux codes sont différents.";
+    $("cOk").disabled=true;
+    try{ await apiG("changerCode",{nouveau:a}); G.code=a; ecrire("cj_code",a); toast("Nouveau code enregistré ✓"); listeG(); }
+    catch(e){ $("cOk").disabled=false; $("cErr").textContent=e.message; }
+  };
+}
 async function ajouterG(){
   const b=$("gAdd"); b.disabled=true; b.textContent="Création…";
   try{ const j=await apiG("ajouter",{}); G.produits=j.produits; editG(j.id); toast("Nouvel emplacement créé"); }
@@ -614,14 +641,14 @@ function etatRef(p){
   return `<span class="ok">✔ ${esc(p.ref)}</span> · caisse ${p.prixCaisse!=null?eur(p.prixCaisse):"—"} · stock ${p.stock??"—"}`;
 }
 function listeG(){
-  const F={tous:"Tous",photo:"Sans photo",libres:"Emplacements libres",masques:"Masqués"};
+  const F={tous:"Tous",photo:"Sans photo",promo:"En promo",masques:"Masqués"};
   const q=(G.q||"").toLowerCase();
   let L=G.produits.filter(p=>{
     if(G.filtre==="photo") return p.nom&&!p.photo;
-    if(G.filtre==="libres") return !p.nom;
+    if(G.filtre==="promo") return p.nom&&p.promo!=null;
     if(G.filtre==="masques") return p.nom&&(!p.afficher||p.stock===0);
     return true;
-  }).filter(p=>!q||(p.nom+" "+p.ref+" "+p.cat).toLowerCase().includes(q));
+  }).filter(p=>p.nom).filter(p=>!q||(p.nom+" "+p.ref+" "+p.cat).toLowerCase().includes(q));
   const nbPh=G.produits.filter(p=>p.nom&&p.photo).length, nbNom=G.produits.filter(p=>p.nom).length;
   $("gerant").innerHTML=ghead("Outils gérant")+`<div class="gb">
    <div class="info" style="margin:0 0 16px;border:2px solid var(--or)"><b>🔎 Tout le catalogue de la caisse</b>
@@ -629,13 +656,14 @@ function listeG(){
     <input id="gCat" type="search" placeholder="Ex. : syrah, beauregard, fontanel…" autocomplete="off" style="margin-top:8px" value="${esc(G.qc||"")}">
     <div id="gCatRes"></div></div>
    <h3 style="font-family:'Playfair Display',Georgia,serif;color:var(--bx);margin:4px 0 2px">✏️ Produits personnalisés</h3>
-   <p class="note" style="margin:0 0 10px">Les produits auxquels vous avez ajouté une photo, une description, un coup de cœur ou une promo (${nbNom}, dont ${nbPh} avec photo).</p>
+   <p class="note" style="margin:0 0 10px">Les produits auxquels vous avez ajouté une photo, une description, un coup de cœur ou une promo : ${nbNom}, dont ${nbPh} avec photo.</p>
    <input class="search" id="gQ" placeholder="Rechercher…" value="${esc(G.q||"")}">
    <div class="chips">${Object.entries(F).map(([k,v])=>`<button class="chip ${G.filtre===k?"on":""}" onclick="G.filtre='${k}';listeG()">${v}</button>`).join("")}</div>
    <button class="btn alt" style="margin:4px 0 12px" id="gAdd" onclick="ajouterG()">➕ Ajouter un produit hors caisse</button>
    ${L.map(p=>`<div class="gitem" onclick="editG('${p.id}')"><div class="th">${p.photo?imgTag(p.photo,""):(p.nom?"📷":"➕")}</div>
      <div class="gi"><b>${p.nom?esc(p.nom):`<span style="color:var(--mu)">Emplacement libre</span>`}${!p.afficher&&p.nom?`<span class="pill">masqué</span>`:""}${p.stock===0?`<span class="pill">épuisé</span>`:""}</b>
      <small>${esc(p.cat)} · ${p.prix!=null?eur(p.prix):"pas de prix"}${p.promo!=null?" → promo "+eur(p.promo):""}${p.cdc?" · ❤":""}${p.nouveau?" · Nouveau":""}</small><small>${etatRef(p)}</small></div></div>`).join("")||`<div class="empty">Aucun produit.</div>`}
+   <button class="btn alt" onclick="changerCodeG()">🔑 Changer le code gérant</button>
    <button class="btn alt" onclick="quitterGerant();fermerGerant()">Quitter le mode gérant</button></div>`;
   $("gQ").oninput=e=>{G.q=e.target.value;const pos=e.target.selectionStart;listeG();const i=$("gQ");i.focus();i.setSelectionRange(pos,pos)};
   $("gCat").oninput=e=>{G.qc=e.target.value;rechCat(G.qc)};
