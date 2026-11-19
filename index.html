@@ -35,6 +35,13 @@ h2{font-size:1.25rem;margin:18px 0 10px;color:var(--bx)}
 .vis{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .vis img.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px;background:#f4ece0}
 .t-lim{background:#1a1210}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.tile{background:#fff;border-radius:16px;padding:18px 12px;text-align:center;cursor:pointer;border:2px solid transparent;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.tile:active{border-color:var(--or)}
+.tile .ico{font-size:2.3rem;line-height:1}
+.tile b{display:block;font-family:"Playfair Display",Georgia,serif;font-size:1.05rem;margin-top:8px;color:var(--bx)}
+.tile small{color:var(--mu);font-size:.78rem}
+.retour{background:none;border:0;color:var(--bx);font:inherit;font-weight:600;font-size:.88rem;padding:4px 0 10px;cursor:pointer}
 .crow{background:#fff;border-radius:12px;padding:8px 10px;display:flex;gap:10px;align-items:center;margin-bottom:8px;cursor:pointer}
 .crow .cth{width:46px;height:58px;flex:none;border-radius:8px;background:#f4ece0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .crow .cth img{width:100%;height:100%;object-fit:contain}
@@ -142,6 +149,11 @@ nav button.on{color:var(--bx);font-weight:600}
   <img src="logo.jpg" alt="La Cave de Jaby">
   <div><h1>La Cave de Jaby</h1><p>Caviste à Saint-André-de-la-Marche</p></div>
 </header>
+<div id="modeG" style="display:none;background:#1a1210;color:#fff;font-size:.8rem;padding:7px 14px;position:sticky;top:85px;z-index:4;align-items:center;gap:8px;border-bottom:2px solid var(--or)">
+  <span style="flex:1">✏️ <b>Mode gérant</b> : touchez un produit, puis « Modifier »</span>
+  <button onclick="ouvrirGerant()" style="background:none;border:1px solid #fff6;color:#fff;border-radius:8px;padding:4px 8px;font:inherit;font-size:.75rem">Outils</button>
+  <button onclick="quitterGerant()" style="background:none;border:1px solid #fff6;color:#fff;border-radius:8px;padding:4px 8px;font:inherit;font-size:.75rem">Quitter</button>
+</div>
 
 <main>
   <section id="accueil" class="on">
@@ -235,10 +247,11 @@ const eur=n=>Number(n).toFixed(2).replace(".",",")+" €";
 const prixDe=p=>(p.promo!=null&&p.promo!=="")?p.promo:p.prix;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let CAT=[], LISTE=[];
-const UNIVERS=["Vins","Bulles","Bières & cidres","Spiritueux & apéritifs","Sans alcool","Épicerie","Coffrets","Accessoires","Autres"];
+const UNIVERS=["Vins","Bières & cidres","Spiritueux & apéritifs","Épicerie","Sans alcool","Coffrets","Accessoires","Autres"];
+const UNIV_ICO={"Vins":"🍷","Bières & cidres":"🍺","Spiritueux & apéritifs":"🥃","Épicerie":"🧺","Sans alcool":"🥤","Coffrets":"🎁","Accessoires":"🍾","Autres":"✨"};
 function univers(fam){
   const f=String(fam||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
-  if(/CHAMPAGNE|MOUSSEUX|CREMANT|BULLES/.test(f)) return "Bulles";
+  if(/CHAMPAGNE|MOUSSEUX|CREMANT|BULLES/.test(f)) return "Vins";
   if(/SOFT|SANS ALCOOL/.test(f)) return "Sans alcool";
   if(/WHISK|RHUM|ALCOOL|SPIRITUEUX|GIN|COGNAC|BIB APERO/.test(f)) return "Spiritueux & apéritifs";
   if(/BIERE|DRAFT|FUT|CIDRE/.test(f)) return "Bières & cidres";
@@ -257,7 +270,7 @@ function depuisCat(a){
   const [id,d,fam,prix,lim]=a;
   return {id,nom:nomPropre(d)||d,des:d,fam,cat:famLabel(fam),univ:univers(fam),region:"",desc:descPropre(d),prix,promo:null,nouveau:false,cdc:false,photo:"",limite:!!lim};
 }
-const UNIV_CAT={"Vins rouges":"Vins","Vins blancs":"Vins","Rosés":"Vins","Bulles":"Bulles","Whiskys":"Spiritueux & apéritifs","Rhums":"Spiritueux & apéritifs","Spiritueux":"Spiritueux & apéritifs","Bières":"Bières & cidres","Épicerie":"Épicerie","Coffrets":"Coffrets"};
+const UNIV_CAT={"Vins rouges":"Vins","Vins blancs":"Vins","Rosés":"Vins","Bulles":"Vins","Whiskys":"Spiritueux & apéritifs","Rhums":"Spiritueux & apéritifs","Spiritueux":"Spiritueux & apéritifs","Bières":"Bières & cidres","Épicerie":"Épicerie","Coffrets":"Coffrets"};
 function construireListe(){
   CAT=(D.catalogue||[]);
   const parId={}; CAT.forEach(a=>parId[a[0]]=a);
@@ -359,9 +372,21 @@ function renderCat(){
   const base=LISTE.filter(e=>mots.every(m=>e.txt.includes(m)));
   const nbU={}; base.forEach(e=>nbU[e.univ]=(nbU[e.univ]||0)+1);
   const us=UNIVERS.filter(u=>nbU[u]);
+  // accueil du catalogue : gros boutons par grande catégorie
+  if(!q&&catU==="Tout"){
+    $("chipsU").innerHTML=""; $("chipsF").innerHTML=""; $("plus").innerHTML="";
+    $("catInfo").textContent=`${base.length} produits en ligne`;
+    $("grid").innerHTML=`<div class="tiles">${us.map(u=>`<div class="tile" data-u="${esc(u)}"><div class="ico">${UNIV_ICO[u]||"✨"}</div><b>${esc(u)}</b><small>${nbU[u]} produits</small></div>`).join("")}</div>`;
+    $("grid").querySelectorAll(".tile").forEach(t=>t.onclick=()=>{catU=t.dataset.u;catF="";catPage=1;renderCat();window.scrollTo(0,0)});
+    return;
+  }
   if(catU!=="Tout"&&!nbU[catU]){ catU="Tout"; catF=""; }
-  $("chipsU").innerHTML=[["Tout",base.length],...us.map(u=>[u,nbU[u]])].map(([u,n])=>`<button class="chip ${u===catU?"on":""}" data-u="${esc(u)}">${esc(u)} <span style="opacity:.6">${n}</span></button>`).join("");
-  $("chipsU").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{catU=b.dataset.u;catF="";catPage=1;renderCat()});
+  if(!q){
+    $("chipsU").innerHTML=`<button class="retour" onclick="catU='Tout';catF='';catPage=1;renderCat()">‹ Toutes les catégories</button> <b style="font-family:'Playfair Display',Georgia,serif;color:var(--bx);font-size:1.05rem">${UNIV_ICO[catU]||""} ${esc(catU)}</b>`;
+  } else {
+    $("chipsU").innerHTML=[["Tout",base.length],...us.map(u=>[u,nbU[u]])].map(([u,n])=>`<button class="chip ${u===catU?"on":""}" data-u="${esc(u)}">${u==="Tout"?"Tout":(UNIV_ICO[u]||"")+" "+esc(u)} <span style="opacity:.6">${n}</span></button>`).join("");
+    $("chipsU").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{catU=b.dataset.u;catF="";catPage=1;renderCat()});
+  }
   let L=catU==="Tout"?base:base.filter(e=>e.univ===catU);
   if(catU!=="Tout"){
     const nbF={}; L.forEach(e=>nbF[e.fam]=(nbF[e.fam]||0)+1);
@@ -390,6 +415,7 @@ function fiche(id){
    <div class="qsel"><button onclick="chgQ(-1)">−</button><span id="qv">1</span><button onclick="chgQ(1)">+</button></div>
    <div class="raccourcis">${[3,6,12].map(n=>`<button class="chip" onclick="setQ(${n})">${n}</button>`).join("")}</div>
    <button class="btn" id="addBtn" onclick="ajout('${p.id}',qFiche);fermerModal()"></button>
+   ${G.code&&API_URL?`<button class="btn alt" style="border-style:dashed" onclick="modifierProduit('${esc(p.id)}')">✏️ Modifier ce produit (gérant)</button>`:""}
    ${deja?`<p class="note" style="text-align:center">Déjà ${deja} dans votre panier.</p>`:""}
   </div></div>`;
   $("ov").onclick=e=>{if(e.target.id==="ov")fermerModal()};
@@ -501,21 +527,81 @@ function ouvrirGerant(){
   if(!API_URL){ $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb"><div class="empty">L'espace gérant n'est disponible que dans la version en ligne de l'appli.</div></div>`; return; }
   if(G.code) chargerG(); else loginG();
 }
-function fermerGerant(){ $("gerant").classList.remove("on"); document.body.style.overflow=""; if(location.hash==="#gerant") history.replaceState(null,"",location.pathname+location.search); charger(); }
-function ghead(t,retour){ return `<div class="gh">${retour?`<button onclick="${retour}">‹ Retour</button>`:""}<h2>${t}</h2><button onclick="fermerGerant()">Fermer</button></div>`; }
+function majModeG(){ const b=$("modeG"); if(b) b.style.display=G.code&&API_URL?"flex":"none"; }
+function quitterGerant(){ G.code=""; ecrire("cj_code",""); G.produits=[]; G.stock=null; majModeG(); toast("Mode gérant désactivé"); }
+/** Depuis la fiche client : ouvre l'édition du produit (le crée dans le tableau au premier enregistrement) */
+async function modifierProduit(id){
+  fermerModal();
+  $("gerant").classList.add("on"); document.body.style.overflow="hidden"; G.depuisClient=true;
+  $("gerant").innerHTML=ghead("Modifier")+`<div class="gb"><div class="loading">Chargement…</div></div>`;
+  try{
+    if(!G.produits.length||!G.categories.length){ const j=await apiG("liste"); G.produits=j.produits; G.categories=j.categories; }
+    id=String(id);
+    if(!id.startsWith("c:")) return editG(id);
+    const a=CAT.find(x=>x[0]===id); if(!a) throw new Error("Produit introuvable");
+    const ref=id.slice(2), deja=G.produits.find(p=>p.ref&&normR(p.ref)===normR(ref));
+    if(deja) return editG(deja.id);
+    editG({id:null,nom:nomPropre(a[1])||a[1],ref,cat:catVitrine(a[2],a[1]),region:regionDe(a[2]),desc:descPropre(a[1]),
+      prix:a[3],promo:null,afficher:true,cdc:false,nouveau:false,photo:"",refTrouvee:true,prixCaisse:a[3],prixManuel:null,stock:null,limite:!!a[4]});
+  }catch(e){
+    if(/code/i.test(e.message)){ quitterGerant(); fermerGerant(); toast("Code gérant changé : reconnectez-vous"); }
+    else $("gerant").querySelector(".gb").innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+function fermerGerant(){ G.depuisClient=false; $("gerant").classList.remove("on"); document.body.style.overflow=""; if(location.hash==="#gerant") history.replaceState(null,"",location.pathname+location.search); charger(); }
+function ghead(t,retour){ return `<div class="gh">${retour?`<button onclick="${retour}">‹ Retour</button>`:""}<h2>${t}</h2><button onclick="fermerGerant()">${G.depuisClient?"Annuler":"Fermer"}</button></div>`; }
 function loginG(err){
   $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb"><div class="info" style="margin-top:10px">
-   <b>Réservé à la cave</b><br>Saisissez le code gérant (onglet Réglages du tableau).
+   <b>Réservé à la cave</b><br>Saisissez le code gérant. Vous naviguerez ensuite dans l'appli comme un client, avec un bouton « ✏️ Modifier » sur chaque produit.
    <input id="gCode" type="password" inputmode="numeric" autocomplete="off" style="margin-top:10px;font-size:1.3rem;text-align:center;letter-spacing:6px" maxlength="12">
    <button class="btn" id="gLog">Entrer</button><div class="err">${err?esc(err):""}</div></div></div>`;
   const go=async()=>{ G.code=$("gCode").value.trim(); $("gLog").disabled=true; $("gLog").textContent="Vérification…";
-    try{ await apiG("login"); ecrire("cj_code",G.code); chargerG(); }catch(e){ G.code=""; loginG(e.message); } };
+    try{ await apiG("login"); ecrire("cj_code",G.code); majModeG(); fermerGerant(); toast("Mode gérant activé : ✏️ sur chaque produit"); }catch(e){ G.code=""; loginG(e.message); } };
   $("gLog").onclick=go; $("gCode").onkeydown=e=>{if(e.key==="Enter")go()}; setTimeout(()=>$("gCode").focus(),50);
 }
 async function chargerG(){
-  $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb"><div class="loading">Chargement des produits…</div></div>`;
+  $("gerant").innerHTML=ghead("Outils gérant")+`<div class="gb"><div class="loading">Chargement des produits…</div></div>`;
   try{ const j=await apiG("liste"); G.produits=j.produits; G.categories=j.categories; listeG(); }
   catch(e){ if(/code/i.test(e.message)){ G.code=""; ecrire("cj_code",""); loginG(e.message); } else $("gerant").querySelector(".gb").innerHTML=`<div class="empty">${esc(e.message)}<br><br><button class="btn alt" onclick="chargerG()">Réessayer</button></div>`; }
+}
+/* --- tout le catalogue, depuis l'espace gérant --- */
+function rechCat(q){
+  const box=$("gCatRes"); if(!box) return; q=normTxt(q).trim();
+  if(q.length<2){ box.innerHTML=""; return; }
+  if(!G.stock){ box.innerHTML=`<p class="hint">Chargement du catalogue…</p>`; chargerStockG().then(()=>rechCat($("gCat")?$("gCat").value:"")); return; }
+  const mots=q.split(/\s+/), qr=normR(q);
+  const score=s=>{const r=normR(s[0]); return r===qr?0:r.startsWith(qr)?1:2;};
+  const res=G.stock.filter(s=>{const t=normTxt(s[0]+" "+s[1]+" "+s[2]);return mots.every(m=>t.includes(m));}).sort((x,y)=>score(x)-score(y)||(y[6]-x[6])).slice(0,20);
+  const enV={}; G.produits.forEach(p=>{ if(p.ref) enV[normR(p.ref)]=p; });
+  box.innerHTML=res.length?res.map((s,i)=>{ const v=enV[normR(s[0])];
+    const etat=v?`<span class="ok">✏️ personnalisé</span>`:s[5]?`<span class="ko">🚫 masqué</span>`:s[6]?`<span class="ok">✔ visible</span>`:`<span class="ko">épuisé / masqué par famille</span>`;
+    return `<div class="gitem" style="margin:6px 0" data-i="${i}"><div class="gi"><b style="white-space:normal">${esc(nomPropre(s[1])||s[1])}</b><small>${esc(s[0])} · ${esc(famLabel(s[2]))} · ${s[3]!=null?eur(s[3]):"—"} · stock ${s[4]??"—"}</small><small>${etat}</small></div></div>`;}).join("")
+    +(res.length===20?`<p class="hint">Les 20 premiers résultats : précisez la recherche.</p>`:"")
+    :`<p class="hint">Aucun produit trouvé.</p>`;
+  box.querySelectorAll(".gitem").forEach(el=>el.onclick=()=>ficheCatG(res[+el.dataset.i]));
+}
+function catVitrine(fam,des){
+  const f=normTxt(fam).toUpperCase(), d=normTxt(des).toUpperCase(), C=G.categories||[];
+  let c=/CHAMPAGNE|MOUSSEUX|CREMANT/.test(f)?"Bulles":/WHISK/.test(f)?"Whiskys":/RHUM/.test(f)?"Rhums":/ALCOOL|APERO|SPIRITUEUX/.test(f)?"Spiritueux":/BIERE|DRAFT|FUT|CIDRE/.test(f)?"Bières":/EPICERIE/.test(f)?"Épicerie":/ROSE\b/.test(d)?"Rosés":/BLANC|CHARDONNAY|SAUVIGNON|RIESLING|CHENIN|MUSCADET|VIOGNIER|PINOT GRIS|GEWURZ|MELON|ALIGOTE/.test(d)?"Vins blancs":"Vins rouges";
+  return C.indexOf(c)>=0?c:(C[0]||c);
+}
+function ficheCatG(s){
+  const v=G.produits.find(p=>p.ref&&normR(p.ref)===normR(s[0]));
+  $("gerant").innerHTML=ghead("Produit de la caisse","listeG()")+`<div class="gb">
+   <div class="info"><b style="font-size:1.05rem">${esc(nomPropre(s[1])||s[1])}</b>
+    <div class="hint" style="margin-top:4px">${esc(s[1])}</div>
+    <div style="margin-top:8px;font-size:.9rem">Réf <b>${esc(s[0])}</b> · ${esc(famLabel(s[2]))}<br>Prix caisse <b>${s[3]!=null?eur(s[3]):"—"}</b> · Stock <b>${s[4]??"—"}</b></div>
+    <div style="margin-top:8px">${v?`<span class="ok">✏️ Déjà personnalisé</span>`:s[5]?`<span class="ko">🚫 Masqué de l'appli</span>`:s[6]?`<span class="ok">✔ Visible dans le catalogue</span>`:`<span class="ko">Non visible (épuisé, sans prix ou famille masquée)</span>`}</div></div>
+   ${v?`<button class="btn" onclick="editG('${v.id}')">✏️ Modifier ce produit</button>`:`<button class="btn" id="cVit">✏️ Personnaliser (photo, description, coup de cœur…)</button>`}
+   <button class="btn alt" id="cMas">${s[5]?"✅ Réafficher dans l'appli":"🚫 Masquer de l'appli"}</button>
+   <p class="hint" style="margin-top:10px">Masquer : le produit disparaît de l'appli, même s'il est en stock. Réversible à tout moment.</p></div>`;
+  if($("cVit")) $("cVit").onclick=async()=>{ const b=$("cVit"); b.disabled=true; b.textContent="Création…";
+    try{ const j=await apiG("ajouter",{champs:{ref:s[0],nom:nomPropre(s[1])||s[1],desc:descPropre(s[1]),region:regionDe(s[2]),cat:catVitrine(s[2],s[1])}}); G.produits=j.produits; editG(j.id); toast("Fiche créée : ajoutez une photo"); }
+    catch(e){ b.disabled=false; b.textContent="✏️ Personnaliser"; toast(e.message); } };
+  $("cMas").onclick=async()=>{ const b=$("cMas"); b.disabled=true;
+    try{ const j=await apiG("masquer",{ref:s[0],masquer:!s[5]}); s[5]=j.masque?1:0; if(j.masque) s[6]=0; toast(j.masque?"Masqué de l'appli":"Réaffiché"); ficheCatG(s); }
+    catch(e){ b.disabled=false; toast(e.message); } };
+  $("gerant").scrollTop=0;
 }
 async function ajouterG(){
   const b=$("gAdd"); b.disabled=true; b.textContent="Création…";
@@ -537,24 +623,31 @@ function listeG(){
     return true;
   }).filter(p=>!q||(p.nom+" "+p.ref+" "+p.cat).toLowerCase().includes(q));
   const nbPh=G.produits.filter(p=>p.nom&&p.photo).length, nbNom=G.produits.filter(p=>p.nom).length;
-  $("gerant").innerHTML=ghead("Espace gérant")+`<div class="gb">
-   <p class="note" style="margin:0 0 10px">${nbNom} produits saisis sur ${G.produits.length} · ${nbPh} avec photo</p>
+  $("gerant").innerHTML=ghead("Outils gérant")+`<div class="gb">
+   <div class="info" style="margin:0 0 16px;border:2px solid var(--or)"><b>🔎 Tout le catalogue de la caisse</b>
+    <div class="hint">Y compris les produits <b>masqués</b> ou <b>épuisés</b>, pour les modifier ou les réafficher. Astuce : vous pouvez aussi naviguer dans l'appli comme un client et toucher « ✏️ Modifier » sur une fiche.</div>
+    <input id="gCat" type="search" placeholder="Ex. : syrah, beauregard, fontanel…" autocomplete="off" style="margin-top:8px" value="${esc(G.qc||"")}">
+    <div id="gCatRes"></div></div>
+   <h3 style="font-family:'Playfair Display',Georgia,serif;color:var(--bx);margin:4px 0 2px">✏️ Produits personnalisés</h3>
+   <p class="note" style="margin:0 0 10px">Les produits auxquels vous avez ajouté une photo, une description, un coup de cœur ou une promo (${nbNom}, dont ${nbPh} avec photo).</p>
    <input class="search" id="gQ" placeholder="Rechercher…" value="${esc(G.q||"")}">
    <div class="chips">${Object.entries(F).map(([k,v])=>`<button class="chip ${G.filtre===k?"on":""}" onclick="G.filtre='${k}';listeG()">${v}</button>`).join("")}</div>
-   <button class="btn" style="margin:4px 0 12px" id="gAdd" onclick="ajouterG()">➕ Ajouter un produit à la vitrine</button>
+   <button class="btn alt" style="margin:4px 0 12px" id="gAdd" onclick="ajouterG()">➕ Ajouter un produit hors caisse</button>
    ${L.map(p=>`<div class="gitem" onclick="editG('${p.id}')"><div class="th">${p.photo?imgTag(p.photo,""):(p.nom?"📷":"➕")}</div>
      <div class="gi"><b>${p.nom?esc(p.nom):`<span style="color:var(--mu)">Emplacement libre</span>`}${!p.afficher&&p.nom?`<span class="pill">masqué</span>`:""}${p.stock===0?`<span class="pill">épuisé</span>`:""}</b>
      <small>${esc(p.cat)} · ${p.prix!=null?eur(p.prix):"pas de prix"}${p.promo!=null?" → promo "+eur(p.promo):""}${p.cdc?" · ❤":""}${p.nouveau?" · Nouveau":""}</small><small>${etatRef(p)}</small></div></div>`).join("")||`<div class="empty">Aucun produit.</div>`}
-   <button class="btn alt" onclick="G.code='';ecrire('cj_code','');loginG()">Se déconnecter</button></div>`;
+   <button class="btn alt" onclick="quitterGerant();fermerGerant()">Quitter le mode gérant</button></div>`;
   $("gQ").oninput=e=>{G.q=e.target.value;const pos=e.target.selectionStart;listeG();const i=$("gQ");i.focus();i.setSelectionRange(pos,pos)};
+  $("gCat").oninput=e=>{G.qc=e.target.value;rechCat(G.qc)};
+  chargerStockG(); if(G.qc) rechCat(G.qc);
 }
 function editG(id){
-  const p=G.produits.find(x=>x.id===String(id)); if(!p) return; G.edit=p;
+  const p=typeof id==="object"?id:G.produits.find(x=>x.id===String(id)); if(!p) return; G.edit=p;
   const cats=G.categories.map(c=>`<option ${c===p.cat?"selected":""}>${esc(c)}</option>`).join("");
-  $("gerant").innerHTML=ghead(p.nom?"Modifier":"Nouveau produit","listeG()")+`<div class="gb">
-   <label style="margin-top:0">🔎 Chercher dans le stock DigiCave</label>
+  $("gerant").innerHTML=ghead(p.nom?"Modifier":"Nouveau produit",G.depuisClient?"":"listeG()")+`<div class="gb">
+   ${p.ref?"":`<label style="margin-top:0">🔎 Chercher dans le stock DigiCave</label>
    <input id="eSrch" placeholder="Ex. : beauregard, fontanel, saint amour…" autocomplete="off">
-   <div id="eRes"></div>
+   <div id="eRes"></div>`}
    <div class="phbox" id="gPh">${p.photo?imgTag(p.photo,""):`<span style="color:var(--mu)">Pas encore de photo</span>`}</div>
    <div class="row2"><button class="btn" onclick="$('fCam').click()">📷 Prendre la photo</button><button class="btn alt" onclick="$('fGal').click()">🖼 Galerie</button></div>
    <input type="file" id="fCam" accept="image/*" capture="environment" hidden><input type="file" id="fGal" accept="image/*" hidden>
@@ -572,10 +665,13 @@ function editG(id){
    <label class="sw">Afficher dans l'appli<input type="checkbox" id="eAff" ${p.afficher?"checked":""}></label>
    <label class="sw">Coup de cœur<input type="checkbox" id="eCdc" ${p.cdc?"checked":""}></label>
    <label class="sw">Nouveauté<input type="checkbox" id="eNew" ${p.nouveau?"checked":""}></label>
-   <button class="btn" id="eSave" onclick="saveG()">Enregistrer</button><div class="err" id="eErr"></div></div>`;
+   <button class="btn" id="eSave" onclick="saveG()">Enregistrer</button><div class="err" id="eErr"></div>
+   ${p.ref?`<button class="btn alt" id="eMas" style="margin-top:22px">🚫 Masquer ce produit de l'appli</button><p class="hint">Il disparaît pour les clients, même s'il est en stock. Pour le réafficher : bandeau Mode gérant › Outils › Tout le catalogue.</p>`:""}</div>`;
   ["fCam","fGal"].forEach(k=>$(k).onchange=e=>{const f=e.target.files[0]; if(f) envoiPhoto(f); e.target.value="";});
-  $("eSrch").oninput=e=>rechStock(e.target.value);
-  chargerStockG();
+  if($("eSrch")){ $("eSrch").oninput=e=>rechStock(e.target.value); chargerStockG(); }
+  if($("eMas")) $("eMas").onclick=async()=>{ const b=$("eMas"); b.disabled=true; b.textContent="…";
+    try{ await apiG("masquer",{ref:p.ref,masquer:true}); if(G.stock) G.stock.forEach(s=>{ if(normR(s[0])===normR(p.ref)){ s[5]=1; s[6]=0; } }); toast("Masqué de l'appli"); G.depuisClient?fermerGerant():listeG(); }
+    catch(e){ b.disabled=false; b.textContent="🚫 Masquer ce produit de l'appli"; toast(e.message); } };
   $("gerant").scrollTop=0;
 }
 /* --- recherche dans le stock DigiCave --- */
@@ -627,14 +723,31 @@ function choisirStock(s){
   $("eRes").innerHTML=""; $("eSrch").value="";
   toast("Référence choisie – vérifiez le nom et la description");
 }
+function champsForm(){
+  const champs={nom:$("eNom").value.trim(),ref:$("eRef").value.trim(),cat:$("eCat").value,region:$("eReg").value,desc:$("eDesc").value,
+    promo:$("ePromo").value.replace(",","."),afficher:$("eAff").checked,cdc:$("eCdc").checked,nouveau:$("eNew").checked};
+  if(!$("ePrix").disabled) champs.prix=$("ePrix").value.replace(",",".");
+  return champs;
+}
+/** Crée la ligne dans le tableau si le produit n'y est pas encore (produit venu du catalogue) */
+async function assurerLigne(p){
+  if(p.id) return p.id;
+  const j=await apiG("ajouter",{champs:champsForm()});
+  p.id=String(j.id); G.produits=j.produits; return p.id;
+}
 async function saveG(){
   const p=G.edit, nom=$("eNom").value.trim();
   if(!nom) return $("eErr").textContent="Le nom est obligatoire.";
-  const champs={nom,ref:$("eRef").value.trim(),cat:$("eCat").value,region:$("eReg").value,desc:$("eDesc").value,
-    promo:$("ePromo").value.replace(",","."),afficher:$("eAff").checked,cdc:$("eCdc").checked,nouveau:$("eNew").checked};
-  if(!$("ePrix").disabled) champs.prix=$("ePrix").value.replace(",",".");
   const b=$("eSave"); b.disabled=true; b.textContent="Enregistrement…";
-  try{ const j=await apiG("enregistrer",{id:p.id,champs}); G.produits=j.produits; toast("Enregistré ✓"); const n=G.produits.find(x=>x.id===p.id); if(n&&n.ref&&!n.refTrouvee){ editG(p.id); $("eErr").textContent="Enregistré, mais la réf caisse est introuvable dans l'onglet Stock."; } else listeG(); }
+  try{
+    let j;
+    if(!p.id){ await assurerLigne(p); j={produits:G.produits}; }
+    else j=await apiG("enregistrer",{id:p.id,champs:champsForm()});
+    G.produits=j.produits; toast("Enregistré ✓");
+    const n=G.produits.find(x=>x.id===p.id);
+    if(n&&n.ref&&!n.refTrouvee){ editG(p.id); $("eErr").textContent="Enregistré, mais la réf caisse est introuvable dans l'onglet Stock."; }
+    else if(G.depuisClient) fermerGerant(); else listeG();
+  }
   catch(e){ b.disabled=false; b.textContent="Enregistrer"; $("eErr").textContent=e.message; }
 }
 function reduireImage(file,max=1000,q=.82){
@@ -650,6 +763,7 @@ async function envoiPhoto(file){
   try{
     const data=await reduireImage(file);
     box.innerHTML=`<img src="${data}" style="opacity:.5"><div style="position:absolute;background:#000a;color:#fff;padding:6px 12px;border-radius:20px;font-size:.85rem">Envoi…</div>`;
+    await assurerLigne(p);
     const j=await apiG("photo",{id:p.id,data});
     p.photo=j.photo; PH_CACHE[j.photo.slice(6)]=data;
     box.innerHTML=`<img src="${data}">`; toast("Photo enregistrée ✓");
@@ -703,6 +817,7 @@ function noAge(){ $("age").querySelector(".modal").innerHTML=`<h2>Désolé</h2><
 if(lire("cj_age",0)===1) $("age").remove();
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
 afficherInstall();
+majModeG();
 charger();
 if(location.hash==="#gerant") setTimeout(ouvrirGerant,300);
 </script>
