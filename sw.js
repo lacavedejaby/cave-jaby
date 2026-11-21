@@ -1,6 +1,6 @@
 // Service worker : rend l'appli installable et utilisable hors connexion.
 // Changer le numéro de version à chaque mise en ligne d'une nouvelle version de l'appli.
-const VERSION = "cave-jaby-v3-3";
+const VERSION = "cave-jaby-v3-4";
 const FICHIERS = ["./", "index.html", "manifest.json", "logo.jpg", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

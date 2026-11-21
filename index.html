@@ -333,7 +333,9 @@ function afficher(){
   construireListe();
   const P=D.produits;
   $("accContent").innerHTML =
-    (D.actus.length?`<h2>Actualités</h2>`+D.actus.map(a=>`<div class="news"><small>${esc(a.date)}</small><h3>${esc(a.titre)}</h3><p>${esc(a.texte)}</p></div>`).join(""):"")
+    ((D.actus.length||(G.code&&API_URL))?`<h2>Actualités</h2>`
+      +(G.code&&API_URL?`<button class="btn alt" style="margin:0 0 10px;border-style:dashed" onclick="editActu(null)">➕ Ajouter une actualité</button>`:"")
+      +D.actus.map(a=>`<div class="news">${G.code&&API_URL&&a.id?`<button onclick="editActu('${esc(a.id)}')" aria-label="Modifier" style="float:right;border:0;background:#f3e6d3;border-radius:50%;width:32px;height:32px;font-size:.95rem;cursor:pointer">✏️</button>`:""}<small>${esc(a.date)}</small><h3>${esc(a.titre)}</h3><p>${esc(a.texte)}</p></div>`).join(""):"")
     + bloc("Promotions",P.filter(p=>p.promo))
     + bloc("Coups de cœur de Jaby",P.filter(p=>p.cdc))
     + bloc("Nouveautés",P.filter(p=>p.nouveau))
@@ -540,7 +542,45 @@ function menuGerant(){
    <button class="btn alt" onclick="fermerModal();quitterGerant()">Quitter le mode gérant</button></div></div>`;
   $("ovM").onclick=e=>{if(e.target.id==="ovM")fermerModal()};
 }
-function quitterGerant(){ G.code=""; ecrire("cj_code",""); G.produits=[]; G.stock=null; majModeG(); toast("Mode gérant désactivé"); }
+function quitterGerant(){ G.code=""; ecrire("cj_code",""); G.produits=[]; G.stock=null; majModeG(); if(D.produits) afficher(); toast("Mode gérant désactivé"); }
+/* --- actualités --- */
+async function editActu(id, depuisOutils){
+  $("gerant").classList.add("on"); document.body.style.overflow="hidden"; G.depuisClient=!depuisOutils;
+  $("gerant").innerHTML=ghead("Actualité")+`<div class="gb"><div class="loading">Chargement…</div></div>`;
+  let a={id:null,afficher:true,date:"",titre:"",texte:""};
+  try{ if(id){ const j=await apiG("actus"); G.actus=j.actus; a=G.actus.find(x=>x.id===String(id))||a; } }
+  catch(e){ $("gerant").querySelector(".gb").innerHTML=`<div class="empty">${esc(e.message)}</div>`; return; }
+  $("gerant").innerHTML=ghead(a.id?"Modifier l'actualité":"Nouvelle actualité",depuisOutils?"listeActusG()":"")+`<div class="gb">
+   <label style="margin-top:0">Date ou période (texte libre)</label><input id="aDate" value="${esc(a.date)}" placeholder="Ex. : Vendredi 4 décembre · 19h, Tout le mois de décembre…">
+   <label>Titre *</label><input id="aTit" value="${esc(a.titre)}" placeholder="Ex. : Soirée Whisky – La Piautre" maxlength="120">
+   <label>Texte</label><textarea id="aTxt" rows="4" maxlength="600" placeholder="Ex. : Dégustation commentée à la cave. Sur inscription.">${esc(a.texte)}</textarea>
+   <div class="hint">Loi Évin : informer (date, produits, lieu, prix), sans discours festif ou incitatif.</div>
+   <label class="sw">Afficher sur l'accueil<input type="checkbox" id="aAff" ${a.afficher?"checked":""}></label>
+   <button class="btn" id="aOk">Enregistrer</button><div class="err" id="aErr"></div>
+   ${a.id?`<button class="btn alt" id="aDel" style="margin-top:22px">🗑 Supprimer cette actualité</button>`:""}</div>`;
+  const fin=()=>{ toast("Actualités mises à jour ✓"); depuisOutils?listeActusG():fermerGerant(); };
+  $("aOk").onclick=async()=>{
+    const titre=$("aTit").value.trim(); if(!titre) return $("aErr").textContent="Le titre est obligatoire.";
+    $("aOk").disabled=true; $("aOk").textContent="Enregistrement…";
+    try{ const j=await apiG("actu",{id:a.id,date:$("aDate").value,titre,texte:$("aTxt").value,afficher:$("aAff").checked}); G.actus=j.actus; fin(); }
+    catch(e){ $("aOk").disabled=false; $("aOk").textContent="Enregistrer"; $("aErr").textContent=e.message; }
+  };
+  if($("aDel")) $("aDel").onclick=async()=>{
+    const b=$("aDel");
+    if(!b.dataset.ok){ b.dataset.ok=1; b.textContent="Touchez encore pour confirmer la suppression"; b.style.borderColor="#c0392b"; b.style.color="#c0392b"; return; }
+    b.disabled=true;
+    try{ const j=await apiG("actuSuppr",{id:a.id}); G.actus=j.actus; fin(); }catch(e){ b.disabled=false; $("aErr").textContent=e.message; }
+  };
+  $("gerant").scrollTop=0;
+}
+async function listeActusG(){
+  G.depuisClient=false;
+  $("gerant").innerHTML=ghead("Actualités","listeG()")+`<div class="gb"><div class="loading">Chargement…</div></div>`;
+  try{ const j=await apiG("actus"); G.actus=j.actus; }catch(e){ $("gerant").querySelector(".gb").innerHTML=`<div class="empty">${esc(e.message)}</div>`; return; }
+  $("gerant").innerHTML=ghead("Actualités","listeG()")+`<div class="gb">
+   <button class="btn" style="margin:0 0 12px" onclick="editActu(null,true)">➕ Ajouter une actualité</button>
+   ${G.actus.length?G.actus.map(a=>`<div class="gitem" onclick="editActu('${esc(a.id)}',true)"><div class="th">📰</div><div class="gi"><b style="white-space:normal">${esc(a.titre)}${a.afficher?"":`<span class="pill">masquée</span>`}</b><small>${esc(a.date)}</small></div></div>`).join(""):`<div class="empty">Aucune actualité.</div>`}</div>`;
+}
 /** Depuis la fiche client : ouvre l'édition du produit (le crée dans le tableau au premier enregistrement) */
 async function modifierProduit(id){
   fermerModal();
@@ -663,6 +703,7 @@ function listeG(){
    ${L.map(p=>`<div class="gitem" onclick="editG('${p.id}')"><div class="th">${p.photo?imgTag(p.photo,""):(p.nom?"📷":"➕")}</div>
      <div class="gi"><b>${p.nom?esc(p.nom):`<span style="color:var(--mu)">Emplacement libre</span>`}${!p.afficher&&p.nom?`<span class="pill">masqué</span>`:""}${p.stock===0?`<span class="pill">épuisé</span>`:""}</b>
      <small>${esc(p.cat)} · ${p.prix!=null?eur(p.prix):"pas de prix"}${p.promo!=null?" → promo "+eur(p.promo):""}${p.cdc?" · ❤":""}${p.nouveau?" · Nouveau":""}</small><small>${etatRef(p)}</small></div></div>`).join("")||`<div class="empty">Aucun produit.</div>`}
+   <button class="btn alt" onclick="listeActusG()">📰 Actualités (y compris masquées)</button>
    <button class="btn alt" onclick="changerCodeG()">🔑 Changer le code gérant</button>
    <button class="btn alt" onclick="quitterGerant();fermerGerant()">Quitter le mode gérant</button></div>`;
   $("gQ").oninput=e=>{G.q=e.target.value;const pos=e.target.selectionStart;listeG();const i=$("gQ");i.focus();i.setSelectionRange(pos,pos)};
